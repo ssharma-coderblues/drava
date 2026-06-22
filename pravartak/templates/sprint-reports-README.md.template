@@ -1,0 +1,13 @@
+<!-- pravartak: template=sprint-reports-README.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# {{PROJECT_NAME}} — Sprint Reports
+
+Canonical location for sprint summaries: `docs/sprint-reports/sprint-<n>.md`, written by the
+autonomous loop at each sprint boundary (spec §11.3). Each report covers the stories
+completed, notable decisions, escalations and how they resolved, and metrics. The
+`/retrospect` skill reads these to build the retrospective.
+
+> Pravartak v0.2.0 treats `docs/sprint-reports/` as canonical (it lives with the code the
+> loop produces). A pointer copy of this README may also exist at
+> `.claude/sprint-reports/README.md`.
+
+No sprints completed yet.

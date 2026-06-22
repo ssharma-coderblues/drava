@@ -1,0 +1,8 @@
+<!-- pravartak: template=completed.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# {{PROJECT_NAME}} — Completed Stories
+
+Append-only log of stories the autonomous loop has completed. One entry per story.
+
+| Story | Title | Branch | Commit / PR | Completed at |
+| --- | --- | --- | --- | --- |
+<!-- Appended by the autonomous loop as each story merges. -->

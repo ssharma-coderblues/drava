@@ -1,0 +1,53 @@
+<!-- pravartak: template=codex-runtime.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# Codex Runtime Adapter
+
+This document is the Codex-specific operating surface for `{{PROJECT_NAME}}`.
+
+Codex support in Pravartak is explicit and non-speculative: use these prompts and the
+canonical `PRAVARTAK.md` guide rather than assuming a Codex-specific settings file or slash
+command surface.
+
+Read order for any Codex session:
+
+1. `PRAVARTAK.md`
+2. This file
+3. The relevant `pravartak/skills/<skill>/SKILL.md` or `pravartak/commands/status.md`
+
+## Codex-only workflow
+
+Use an interactive Codex session rooted at the repository and give it one of these prompts.
+
+### Scaffold
+
+```text
+Read PRAVARTAK.md if it exists, then read pravartak/skills/scaffold/SKILL.md and pravartak/scaffold/SCAFFOLD.md. Execute the scaffold procedure interactively for this repository.
+```
+
+### Architect review
+
+```text
+Read PRAVARTAK.md, this Codex adapter guide, and pravartak/skills/architect-review/SKILL.md. Review all pending stories in .claude/backlog.md and update the standard Pravartak review state files.
+```
+
+### Autonomous execution
+
+```text
+Read PRAVARTAK.md, this Codex adapter guide, and pravartak/skills/autonomous-loop/SKILL.md. Act as the autonomous_runtime for this project. Resume from the standard Pravartak state files, implement the next eligible reviewed story, and continue until the backlog is empty or a stop condition fires.
+```
+
+## Codex implement + Claude review
+
+This is the recommended mixed-runtime workflow when you want Codex to build and Claude to
+review:
+
+1. Set `implementation_runtime: codex` in `PRAVARTAK.md`.
+2. Set `review_runtime: claude` in `PRAVARTAK.md`.
+3. Run architect review with Claude using `docs/agent-runtimes/claude.md`.
+4. Run implementation with the Codex autonomous or implementation prompt above.
+5. Keep review, promotion, and any Claude slash-command work on the Claude adapter surface.
+
+## Status and other non-command tasks
+
+Codex has no Pravartak slash-command surface in this release. For status, drift, promotion,
+or other procedures, instruct Codex to read the corresponding skill or command markdown
+directly and execute it.

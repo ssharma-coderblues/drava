@@ -1,0 +1,61 @@
+# pravartak: template=pyproject.toml.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}}
+#
+# Rendered by /scaffold for project {{PROJECT_NAME}}. Edit freely thereafter — on upgrade,
+# Pravartak diffs this file and prompts before changing it (ownership: project).
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{PROJECT_NAME_SLUG}}"
+version = "0.0.0"
+description = "{{PROJECT_NAME}} — a Pravartak-managed project"
+# Production target interpreter (lesson §14.6: this stays at the production version even
+# when local dev / ruff lag behind).
+requires-python = ">={{LANGUAGE_VERSION}}"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "ruff",
+  "mypy",
+  "pytest",
+  "pytest-cov",
+  "pytest-asyncio",
+  # Optional but recommended by the universal standards:
+  "testcontainers",  # integration tests against real backing services (§13.6)
+  "bandit",          # security baseline scanning (§13.10)
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# --- Type checking (§13: strict type safety) ---------------------------------
+[tool.mypy]
+# python_version tracks the PRODUCTION target, not the local dev interpreter (§14.6).
+python_version = "{{LANGUAGE_VERSION}}"
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+no_implicit_reexport = true
+show_error_codes = true
+files = ["src", "tests"]
+
+# --- Tests + coverage (§13.3: TDD, 95% line AND branch coverage) -------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=src --cov-branch --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+# Single source of truth for the coverage gate (gate.sh reads this, not a placeholder).
+fail_under = {{COVERAGE_THRESHOLD}}
+show_missing = true
+skip_covered = false

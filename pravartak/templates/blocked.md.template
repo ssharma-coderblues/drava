@@ -1,0 +1,10 @@
+<!-- pravartak: template=blocked.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# {{PROJECT_NAME}} — Blocked Stories
+
+Stories the autonomous loop could not proceed with but that did not warrant a hard halt
+(e.g. waiting on an external dependency). The loop skips these to the next eligible story.
+Resolve the blocker, then the story becomes eligible again.
+
+| Story | Reason blocked | Blocked at | Resolved? |
+| --- | --- | --- | --- |
+<!-- Appended by the autonomous loop. -->

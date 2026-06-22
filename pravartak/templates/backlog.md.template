@@ -1,0 +1,33 @@
+<!-- pravartak: template=backlog.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# {{PROJECT_NAME}} — Backlog
+
+The flat list of executable stories. Populated by ingestion (a draft), validated by
+architect review (`/review-all`), and executed by the autonomous loop. The loop reads
+`[ ]` (not done) vs `[x]` (done); do not change that convention.
+
+**Story block format** (every story uses exactly this shape so ingestion, architect-review,
+and the autonomous loop can all parse it):
+
+```markdown
+- [ ] STORY-NNN — <concise imperative title>
+  - Scope: <what this story does and explicitly does not do>
+  - Acceptance criteria:
+    - <criterion 1, testable>
+    - <criterion 2, testable>
+  - Depends on: <STORY-0xx, … | none>
+  - Source: discovery/<file>.md#<section>
+```
+
+(The `STORY-NNN` above is the format example, not a real story; real stories begin at
+`STORY-001` under **## Stories** below.)
+
+Story ids are stable `STORY-NNN` (never renumbered). Scope and corrective stories promoted
+from `.claude/architect_review/scope_additions.md` keep their own ids
+(`STORY-SCOPE-…`, `STORY-CORR-…`).
+
+---
+
+## Stories
+
+<!-- Stories are inserted here by ingestion. Empty until /scaffold runs the archetype's
+     ingestion procedure. -->

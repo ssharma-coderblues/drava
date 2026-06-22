@@ -1,0 +1,42 @@
+{
+  "project": "drava-pravartak-poc-sandbox",
+  "linearProjectId": "6cacc95c-f588-41a9-b389-9e5cddb65e9c",
+  "linearTeamId": "7b2f0910-190b-48af-97c0-b7598add36c4",
+  "stories": [
+    {
+      "id": "S1",
+      "linearId": "DRA-5",
+      "title": "[POC-S1] Base payment infrastructure",
+      "depends_on": [],
+      "touches": ["payments/base.py", "payments/types.py", "payments/repository.py"]
+    },
+    {
+      "id": "S2",
+      "linearId": "DRA-6",
+      "title": "[POC-S2] Transfer validation logic",
+      "depends_on": ["S1"],
+      "touches": ["payments/transfer.py", "payments/validators.py"]
+    },
+    {
+      "id": "S3",
+      "linearId": "DRA-8",
+      "title": "[POC-S3] Transfer audit trail",
+      "depends_on": ["S2"],
+      "touches": ["payments/audit.py", "payments/events.py"]
+    },
+    {
+      "id": "S4",
+      "linearId": "DRA-7",
+      "title": "[POC-S4] Transfer rate limits",
+      "depends_on": ["S1"],
+      "touches": ["payments/transfer.py", "payments/limits.py"]
+    },
+    {
+      "id": "S5",
+      "linearId": "DRA-9",
+      "title": "[POC-S5] Compliance reporting pipeline",
+      "depends_on": ["S3"],
+      "touches": ["compliance/reports.py", "compliance/pipeline.py"]
+    }
+  ]
+}

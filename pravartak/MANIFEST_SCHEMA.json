@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pravartak.vesta-platform.dev/schemas/manifest-0.5.0.json",
+  "title": "Pravartak Manifest",
+  "description": "Schema for the generated .pravartak/manifest.json provenance manifest. Records which Pravartak version generated which file and what it looked like at generation, so that /pravartak-upgrade can reconcile library changes against project edits. See spec sections 9.1-9.3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pravartak_version",
+    "scaffolded_at",
+    "project",
+    "files"
+  ],
+  "properties": {
+    "pravartak_version": {
+      "description": "Semantic version of the Pravartak library currently installed. Authoritative regardless of git state (spec section 9.3).",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "scaffolded_at": {
+      "description": "ISO 8601 UTC timestamp of when the project was first scaffolded.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "archetype", "language_pack"],
+      "properties": {
+        "name": {
+          "description": "Project name (filesystem-friendly identifier).",
+          "type": "string",
+          "minLength": 1
+        },
+        "archetype": {
+          "description": "The ingestion archetype used in Phase 1.",
+          "type": "string",
+          "enum": [
+            "greenfield-markdown",
+            "reverse-engineer-code",
+            "confluence",
+            "jira",
+            "linear",
+            "brownfield-adopt",
+            "loose-docs"
+          ]
+        },
+        "language_pack": {
+          "description": "Language pack name, the literal 'custom', or a comma-or-plus joined list for multi-language projects (e.g. 'python+typescript').",
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_roles": {
+          "description": "Optional runtime-role assignments for the project. Defaults are Claude-first for backward compatibility when omitted.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "interactive": {
+              "type": "string",
+              "minLength": 1
+            },
+            "autonomous": {
+              "type": "string",
+              "minLength": 1
+            },
+            "implementation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "review": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "adapter_surfaces": {
+          "description": "Optional list of runtime adapters explicitly scaffolded for the project.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "files": {
+      "description": "One entry per file the scaffold generated.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/fileEntry" }
+    }
+  },
+  "$defs": {
+    "fileEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "template",
+        "generated_by_version",
+        "generated_at",
+        "content_hash_at_generation",
+        "ownership",
+        "upgrade_strategy"
+      ],
+      "properties": {
+        "path": {
+          "description": "Path to the generated file, relative to the project root.",
+          "type": "string",
+          "minLength": 1
+        },
+        "template": {
+          "description": "Source template path within the pravartak/ library that produced this file.",
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_by_version": {
+          "description": "Pravartak version that generated this file (may differ from the top-level pravartak_version after partial upgrades).",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+        },
+        "generated_at": {
+          "description": "ISO 8601 UTC timestamp of when this file was generated.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "content_hash_at_generation": {
+          "description": "SHA-256 of the file content exactly as Pravartak wrote it, prefixed 'sha256:'. Upgrades compare the current hash to this to detect project edits (spec section 9.3).",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "ownership": {
+          "description": "'project' = the project may edit freely; upgrades diff and prompt. 'library' = thin pointer / library-managed; upgrades may replace safely (spec section 9.2).",
+          "type": "string",
+          "enum": ["project", "library"]
+        },
+        "upgrade_strategy": {
+          "description": "How /pravartak-upgrade reconciles this file (spec section 9.2).",
+          "type": "string",
+          "enum": [
+            "always-replace",
+            "diff-and-prompt",
+            "merge-three-way",
+            "preserve-on-conflict"
+          ]
+        }
+      }
+    }
+  }
+}

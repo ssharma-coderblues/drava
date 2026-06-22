@@ -1,0 +1,7 @@
+<!-- pravartak: template=command-pointer.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+---
+description: {{COMMAND_DESCRIPTION}}
+argument-hint: {{COMMAND_ARGUMENT_HINT}}
+---
+
+Read pravartak/skills/{{SKILL_NAME}}/SKILL.md and execute the documented procedure with arguments: $ARGUMENTS.

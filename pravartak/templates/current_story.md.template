@@ -1,0 +1,17 @@
+<!-- pravartak: template=current_story.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# {{PROJECT_NAME}} — Current Story
+
+The story the autonomous loop is currently implementing, for resume across context resets.
+Empty when no story is in flight. On relaunch, the loop reads this first (resume check) and
+continues the in-flight story rather than starting a new one.
+
+## In flight
+
+_None._
+
+<!-- When active:
+Story: STORY-0xx — <title>
+Branch: feature/{{PROJECT_NAME_SLUG}}-STORY-0xx-<slug>
+Started: <timestamp>
+Progress: <which acceptance criteria are done, which remain>
+-->

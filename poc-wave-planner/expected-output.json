@@ -1,0 +1,78 @@
+{
+  "_comment": "Expected wave-planner output for the 5-story PoC scenario. Verified against planner.js output.",
+  "project": "drava-pravartak-poc-sandbox",
+  "story_count": 5,
+  "wave_count": 4,
+  "topological_order": ["S1", "S2", "S4", "S3", "S5"],
+  "waves": [
+    {
+      "wave": 1,
+      "stories": [
+        { "id": "S1", "linearId": "DRA-5", "execution": "parallel" }
+      ],
+      "collisions": []
+    },
+    {
+      "wave": 2,
+      "stories": [
+        { "id": "S2", "linearId": "DRA-6", "execution": "sequential" },
+        { "id": "S4", "linearId": "DRA-7", "execution": "sequential" }
+      ],
+      "collisions": [
+        {
+          "file": "payments/transfer.py",
+          "between": ["S2", "S4"]
+        }
+      ]
+    },
+    {
+      "wave": 3,
+      "stories": [
+        { "id": "S3", "linearId": "DRA-8", "execution": "parallel" }
+      ],
+      "collisions": []
+    },
+    {
+      "wave": 4,
+      "stories": [
+        { "id": "S5", "linearId": "DRA-9", "execution": "parallel" }
+      ],
+      "collisions": []
+    }
+  ],
+  "pravartak_execution_plan": [
+    {
+      "wave": 1,
+      "type": "parallel",
+      "reason": "No dependency or file-touch conflicts",
+      "items": [
+        { "storyId": "S1", "linearId": "DRA-5", "handoff": "Execute reviewed story DRA-5 via the Pravartak autonomous-loop protocol." }
+      ]
+    },
+    {
+      "wave": 2,
+      "type": "sequential",
+      "reason": "File-touch collision on: payments/transfer.py",
+      "items": [
+        { "storyId": "S2", "linearId": "DRA-6", "handoff": "Execute reviewed story DRA-6 via the Pravartak autonomous-loop protocol.", "note": "Wait for previous story to complete and merge to the integration branch before starting this one" },
+        { "storyId": "S4", "linearId": "DRA-7", "handoff": "Execute reviewed story DRA-7 via the Pravartak autonomous-loop protocol.", "note": "Wait for previous story to complete and merge to the integration branch before starting this one" }
+      ]
+    },
+    {
+      "wave": 3,
+      "type": "parallel",
+      "reason": "No dependency or file-touch conflicts",
+      "items": [
+        { "storyId": "S3", "linearId": "DRA-8", "handoff": "Execute reviewed story DRA-8 via the Pravartak autonomous-loop protocol." }
+      ]
+    },
+    {
+      "wave": 4,
+      "type": "parallel",
+      "reason": "No dependency or file-touch conflicts",
+      "items": [
+        { "storyId": "S5", "linearId": "DRA-9", "handoff": "Execute reviewed story DRA-9 via the Pravartak autonomous-loop protocol." }
+      ]
+    }
+  ]
+}

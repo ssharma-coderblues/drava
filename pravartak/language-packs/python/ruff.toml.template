@@ -1,0 +1,48 @@
+# pravartak: template=ruff.toml.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}}
+#
+# Rendered by /scaffold for {{PROJECT_NAME}}. ruff reads this file in preference to any
+# [tool.ruff] table in pyproject.toml, so ruff configuration lives here exclusively.
+#
+# Lesson §14.6: ruff and mypy do not always support the same Python version at the same
+# time. `target-version` is set to the highest version THIS ruff supports (computed by the
+# pack at scaffold time — see PACK.md), which may be BEHIND the production target. Meanwhile
+# mypy `python_version` and the project's `requires-python` stay at the production target
+# ({{LANGUAGE_VERSION}}). Do not raise target-version past what the installed ruff accepts.
+
+target-version = "{{RUFF_TARGET_VERSION}}"
+line-length = 100
+src = ["src", "tests"]
+
+[lint]
+# A strict, composition-favoring rule set. ASYNC enforces async-first (§13.8); B/SIM/PL
+# discourage the kinds of inheritance-heavy, side-effecting code that fights SOLID.
+select = [
+  "E", "W",      # pycodestyle
+  "F",            # pyflakes
+  "I",            # isort (import ordering)
+  "N",            # pep8-naming
+  "UP",           # pyupgrade
+  "B",            # flake8-bugbear
+  "A",            # flake8-builtins
+  "C4",           # flake8-comprehensions
+  "SIM",          # flake8-simplify (favors simpler, composable expressions)
+  "TID",          # flake8-tidy-imports
+  "ASYNC",        # async-first enforcement (§13.8)
+  "S",            # flake8-bandit (security baseline, §13.10)
+  "PL",           # pylint subset
+  "RUF",          # ruff-specific rules
+]
+ignore = [
+  "PLR0913",      # allow several function args (DI-style constructors)
+]
+
+[lint.per-file-ignores]
+# Tests may use asserts and fixtures freely.
+"tests/**" = ["S101", "PLR2004"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[format]
+quote-style = "double"
+indent-style = "space"

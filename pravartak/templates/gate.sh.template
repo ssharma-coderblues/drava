@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# pravartak: template=gate.sh.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}}
+#
+# Composite quality gate for {{PROJECT_NAME}} ({{LANGUAGE}}).
+#
+# Used for multi-language and custom projects: this is the entry point at
+# .claude/scripts/gate.sh. It handles the PreToolUse commit-hook contract once, then runs
+# every per-language sub-gate (.claude/scripts/gate-*.sh) in sequence, failing if any fails
+# (spec §12.5). Single built-in-language projects use the language pack's gate.sh directly
+# and do not render this template.
+#
+# Dual-mode:
+#   gate.sh           direct run (smoke test, autonomous loop) — exit 0 pass / 1 fail
+#   gate.sh --hook    PreToolUse hook — reads tool JSON on stdin, gates only `git commit`,
+#                     exit 0 allow / 2 block
+
+set -euo pipefail
+
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SELF="$(basename "${BASH_SOURCE[0]}")"
+
+run_all() {
+  local sub rc=0 ran=0
+  printf '\n=== Composite quality gate ({{PROJECT_NAME}}) ===\n\n'
+  for sub in "$SCRIPTS_DIR"/gate-*.sh; do
+    # Guard against the glob matching nothing.
+    [ -e "$sub" ] || continue
+    # Never recurse into ourselves.
+    [ "$(basename "$sub")" = "$SELF" ] && continue
+    ran=$((ran + 1))
+    printf -- '--- %s ---\n' "$(basename "$sub")"
+    if ! bash "$sub"; then
+      rc=1
+    fi
+  done
+  if [ "$ran" -eq 0 ]; then
+    printf 'No per-language sub-gates (gate-*.sh) found — nothing to run.\n'
+  fi
+  if [ "$rc" -eq 0 ]; then
+    printf '\n\033[32m=== COMPOSITE GATE PASSED ===\033[0m\n\n'
+  else
+    printf '\n\033[31m=== COMPOSITE GATE FAILED ===\033[0m\n\n'
+  fi
+  return "$rc"
+}
+
+if [ "${1:-}" = "--hook" ]; then
+  payload="$(cat)"
+  command_str="$(printf '%s' "$payload" | jq -r '.tool_input.command // ""' 2>/dev/null || printf '')"
+  case "$command_str" in
+    *"git commit"*) ;;
+    *) exit 0 ;;
+  esac
+  if run_all; then
+    exit 0
+  else
+    echo "Quality gate failed — commit blocked. Fix the issues above and retry." >&2
+    exit 2
+  fi
+else
+  if run_all; then exit 0; else exit 1; fi
+fi

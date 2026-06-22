@@ -1,0 +1,9 @@
+<!-- pravartak: template=progress.md.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}} -->
+# {{PROJECT_NAME}} — Architect Review Progress
+
+One row per story. The source of truth for review status. Review is complete when every
+row is `REVIEWED` or `SKIPPED`. Status values: `PENDING` / `REVIEWED` / `SKIPPED`.
+
+| Story | Status | Reviewed at | Notes |
+| --- | --- | --- | --- |
+<!-- One row per backlog story is inserted here by ingestion/scaffold, all PENDING. -->
