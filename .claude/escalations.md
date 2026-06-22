@@ -1,0 +1,19 @@
+<!-- pravartak: template=escalations.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+# drava — Escalations
+
+Hard-stop context written by the autonomous loop when a stop condition fires (spec §11.4).
+The loop **halts** on an unresolved escalation; it will not resume past one until the
+architect clears it. Mark an escalation resolved (and what was done) before relaunching
+auto-mode.
+
+## Open escalations
+
+_None._
+
+<!-- Entry format:
+### <timestamp> — STORY-0xx — <stop condition>
+- What happened: ...
+- Relevant output / denial: ...
+- Architect decision needed: ...
+- Resolution: <filled in by the architect>
+-->

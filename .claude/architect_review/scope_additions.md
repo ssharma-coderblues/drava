@@ -1,0 +1,31 @@
+<!-- pravartak: template=scope_additions.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+# drava — Scope Additions & Corrective Stories
+
+Draft stories awaiting promotion to `.claude/backlog.md`. The architect promotes these
+manually; nothing here is picked up by the autonomous loop until promoted. Two kinds:
+
+- **Scope additions** (`STORY-SCOPE-<area>-N`) — new external-system integrations captured
+  by the `scope-addition` skill after architect approval.
+- **Corrective stories** (`STORY-CORR-N`) — alignment work queued when a spec change
+  affects already-implemented code (architect-review §8, drift-detection).
+
+Use the same story block format as the backlog so promotion is a copy-paste.
+
+## Scope additions
+
+<!-- ### Integration: <system> (approved <date>)
+     - Integration path: <chosen approach> (rejected: <briefly>)
+     - Doc impact: <files>
+     Followed by STORY-SCOPE-<area>-N blocks. -->
+
+_None._
+
+## Corrective stories
+
+<!-- ### STORY-CORR-N — Align <area> with amended spec for STORY-0xx
+     - Source: spec amendment <date> (see spec_amendments.md)
+     - Scope: ...
+     - Acceptance criteria: ...
+     - Depends on: STORY-0xx (already implemented) -->
+
+_None._

@@ -1,0 +1,39 @@
+<!-- pravartak: template=claude-runtime.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+# Claude Runtime Adapter
+
+This document is the Claude-specific operating surface for `drava`.
+
+Read order for any Claude session:
+
+1. `PRAVARTAK.md`
+2. `CLAUDE.md`
+3. The relevant skill or command pointer for the task
+
+## Claude-only workflow
+
+- **Scaffold:** open an interactive Claude session in the repo and run `/scaffold`.
+- **Review:** use `/review-all`, `/review-story <ID>`, `/add-scope`, `/drift-check`,
+  `/promote`, and `/status` from `.claude/commands/`.
+- **Settings/hooks:** Claude-specific permissions and the commit-time gate hook live in
+  `.claude/settings.json`.
+
+## Autonomous execution with Claude
+
+Use the verified Claude launcher path:
+
+```bash
+claude --permission-mode auto --effort xhigh --max-budget-usd <N> \
+  -p "Read PRAVARTAK.md, docs/agent-runtimes/claude.md, and pravartak/skills/autonomous-loop/SKILL.md. Execute the autonomous workflow protocol for this repository."
+```
+
+This adapter can be used whenever `autonomous_runtime: claude` is selected in
+`PRAVARTAK.md`.
+
+## Mixed runtime use
+
+If `implementation_runtime: codex` and `review_runtime: claude`:
+
+- Claude owns architect review and promotion.
+- Codex implements reviewed backlog stories.
+- Claude can still use `/status`, `/review-all`, `/review-story`, `/promote`, and the
+  `.claude/` compatibility surface unchanged.

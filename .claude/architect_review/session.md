@@ -1,0 +1,19 @@
+<!-- pravartak: template=session.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+# drava — Architect Review Session
+
+Tracks the in-progress review session for pause/resume. Empty when no session is active.
+When the architect pauses, `architect-review` writes the current story id, the work-list
+position, and free-form notes here; on the next `/review-all` it offers to continue or
+restart.
+
+## Active session
+
+_None._
+
+<!-- When active:
+Current story: STORY-0xx
+Work-list position: <n> of <total>
+Started: <timestamp>
+Notes:
+- ...
+-->

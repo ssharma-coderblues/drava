@@ -1,0 +1,31 @@
+{
+  "//": "pravartak: template=package.json.template version=0.5.0 generated=2026-06-22T22:45:10Z",
+  "//1": "Root workspace package.json for drava. For a brownfield project that already",
+  "//2": "has one, do NOT overwrite — merge the scripts + devDependencies + packageManager below",
+  "//3": "(ownership: project, upgrade_strategy: diff-and-prompt). The gate depends on the lint /",
+  "//4": "typecheck / test scripts existing per-package and on these root devDependencies.",
+  "name": "drava",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "build": "turbo run build",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "//scripts-note": "Each package/app must define its own lint/typecheck/test scripts so turbo has tasks to run. The gate FAILS (GAN-34) if turbo runs 0 tasks for lint or typecheck. Per-package convention: lint='biome check src', typecheck='tsc --noEmit', test='vitest run --coverage'."
+}

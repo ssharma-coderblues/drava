@@ -1,2 +1,36 @@
-.env
+# pravartak: template=gitignore.template version=0.5.0 generated=2026-06-22T22:45:10Z
+#
+# Rendered by /scaffold for drava (typescript). Edit freely.
+
+# OS / editor
 .DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Claude adapter per-user local overrides (not shared)
+.claude/settings.local.json
+
+# Language isolation (project-local; never commit the environment itself)
+.venv/
+node_modules/
+target/
+dist/
+build/
+__pycache__/
+*.py[cod]
+
+# Test / coverage artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Secrets — never commit (security baseline §13.10)
+.env
+.env.*
+*.pem
+*.key
