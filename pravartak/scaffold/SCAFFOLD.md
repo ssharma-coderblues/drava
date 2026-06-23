@@ -48,6 +48,7 @@ From the validated answers, compute the full placeholder set used by template re
 | `{{COVERAGE_THRESHOLD}}` | default `95`, or override from Q5 |
 | `{{PRAVARTAK_VERSION}}` | `pravartak/VERSION` |
 | `{{SCAFFOLD_DATE}}` | Phase 0 timestamp |
+| `{{SCAFFOLD_DATE_YYYY_MM_DD}}` | Phase 0 timestamp date portion (`YYYY-MM-DD`) |
 | `{{ARCHITECT_OVERRIDES}}` | Q5 verbatim (empty string if none) |
 | `{{SOURCE_LOCATION_DESCRIPTION}}` | Q4 human-readable summary |
 | `{{DEFAULT_BRANCH}}` | Phase 0 detection |
@@ -113,6 +114,9 @@ Render at least these (target ← template):
 - `.gitignore` ← `gitignore.template`
 - `docs/agent-runtimes/claude.md` ← `claude-runtime.md.template`
 - `docs/agent-runtimes/codex.md` ← `codex-runtime.md.template`
+- `scripts/no-delete-guard.sh` ← `no-delete-guard.sh.template`
+- `scripts/codex-auto.sh` ← `codex-auto.sh.template`
+- `.pravartak/session-state.json` ← `session-state.json.template`
 - `.claude/backlog.md` ← `backlog.md.template` (then populated by ingestion, Phase 6)
 - `.claude/architect_review/progress.md` ← `progress.md.template`
 - `.claude/architect_review/session.md` ← `session.md.template`
@@ -128,7 +132,7 @@ Render at least these (target ← template):
 Create parent directories as needed:
 `.claude/{commands,scripts,architect_review/findings,reviews,sprint-reports}`,
 `docs/agent-runtimes/`, and
-`.pravartak/`.
+`.pravartak/`, and `scripts/`. Mark rendered shell scripts executable.
 
 ---
 
@@ -210,6 +214,9 @@ produced content for:
 - `.claude/architect_review/session.md` — empty (no session in progress).
 - `.claude/{completed,blocked,escalations,current_story}.md` — empty stubs.
 - `.claude/commit_log.txt` — empty.
+- `.pravartak/session-state.json` — initialized with today's scaffold date,
+  `completedToday: 0`, `maxStoriesPerDay: 10`, and null story pointers. The autonomous loop
+  owns updates to this file.
 - sprint-reports README — placeholder.
 
 **Sprint-reports location note:** spec §6.3 lists `.claude/sprint-reports/` while spec
@@ -259,8 +266,8 @@ Assign ownership and strategy as follows:
 | File class | ownership | upgrade_strategy |
 | --- | --- | --- |
 | Command pointers (`.claude/commands/*.md`) | `library` | `always-replace` |
-| `PRAVARTAK.md`, `CLAUDE.md`, runtime adapter docs, `.claude/settings.json`, `.claude/scripts/gate.sh`, language config (`pyproject.toml`, `ruff.toml`, …) | `project` | `diff-and-prompt` |
-| Accumulating state files (`backlog.md`, `completed.md`, `blocked.md`, `escalations.md`, `current_story.md`, `progress.md`, `session.md`, `commit_log.txt`) | `project` | `preserve-on-conflict` |
+| `PRAVARTAK.md`, `CLAUDE.md`, runtime adapter docs, `.claude/settings.json`, `.claude/scripts/gate.sh`, `scripts/no-delete-guard.sh`, `scripts/codex-auto.sh`, language config (`pyproject.toml`, `ruff.toml`, …) | `project` | `diff-and-prompt` |
+| Accumulating state files (`backlog.md`, `completed.md`, `blocked.md`, `escalations.md`, `current_story.md`, `progress.md`, `session.md`, `commit_log.txt`, `.pravartak/session-state.json`) | `project` | `preserve-on-conflict` |
 | READMEs and other rendered docs | `project` | `diff-and-prompt` |
 
 Compute each hash from the file exactly as written (including its provenance header).

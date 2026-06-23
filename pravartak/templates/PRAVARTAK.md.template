@@ -33,6 +33,8 @@ compatibility. Treat those files as Pravartak protocol state, not as Claude-only
 - **Language:** {{LANGUAGE}} — production target {{LANGUAGE_VERSION}}, local dev
   {{LANGUAGE_VERSION_LOCAL}}
 - **Quality gate:** `.claude/scripts/gate.sh` (`{{QUALITY_GATE_COMMAND}}`)
+- **No-delete guard:** `scripts/no-delete-guard.sh`
+- **Daily autonomous state:** `.pravartak/session-state.json`
 - **Coverage threshold:** {{COVERAGE_THRESHOLD}}%
 - **Default branch:** {{DEFAULT_BRANCH}}
 - **Source material:** {{SOURCE_LOCATION_DESCRIPTION}}
@@ -69,6 +71,9 @@ Defaults are shown; change a line to change behavior.
 - `sprint_cadence: by-story-batch` — sprint tags on story-batch boundaries. Set `weekly`
   (or other) for time-based tags.
 - `branch_pattern: feature/{{PROJECT_NAME_SLUG}}-<story-id>-<slug>` — feature branch naming.
+- `max_stories_per_day: 10` — autonomous mode reads `.pravartak/session-state.json` before
+  selecting the next story. Override a run with `MAX_STORIES_PER_DAY=<N>`. If
+  `completedToday >= maxStoriesPerDay`, the loop exits cleanly with `BUDGET_EXHAUSTED`.
 - `tracker_sync: off` — for `jira`/`linear` archetypes only. Set `on` to transition the
   corresponding tracker issue to its done state when a story completes. `tracker_done_state:
   <state>` overrides the target state if it is not the tracker's default completed state.
@@ -103,16 +108,28 @@ runtime must follow the same protocol:
 2. Read the adapter guide for the assigned runtime:
    `docs/agent-runtimes/claude.md` or `docs/agent-runtimes/codex.md`.
 3. Read `pravartak/skills/autonomous-loop/SKILL.md` for the full execution procedure.
-4. Run the resume check (escalations → current_story → blocked → backlog), then start at the
-   first unchecked story in `.claude/backlog.md` whose dependencies are complete.
-5. Per story: ensure the integration branch exists → cut the feature branch → TDD → quality
+4. Run `scripts/no-delete-guard.sh --check-diff` and `scripts/codex-auto.sh --check-budget`
+   (or the same session-state logic for a non-Codex runtime) before selecting work. If the
+   budget is exhausted, stop with `BUDGET_EXHAUSTED`.
+5. Run the resume check (escalations → current_story → blocked → backlog), then start at the
+   first unchecked story in `.claude/backlog.md` whose dependencies are complete. Record that
+   story in `.pravartak/session-state.json` as `lastStartedStory`.
+6. Per story: ensure the integration branch exists → cut the feature branch → TDD → quality
    gates (3 retries each) → commit → integrate per `git_workflow` → re-gate the integration
    branch → push if authorized → mark complete → next.
-6. Honor every stop condition: write `.claude/escalations.md` and halt rather than forcing
+7. After the story is committed and pushed successfully, increment `completedToday` and record
+   `lastCompletedStory`. Never increment for failed commits, failed pushes, partial work, or
+   local-only work that did not complete its configured integration step.
+8. No deletes: autonomous mode may edit lines and add files, but must not delete or rename
+   files. Block delete and rename/delete git diff statuses. Do not run `rm`, `rmdir`,
+   `unlink`, `git clean`, `git reset --hard`, `git checkout --`, `git restore`, destructive
+   `mv`, or equivalent cleanup. If a story truly requires a deletion or rename, halt and
+   report `BLOCKED_DELETION_REQUIRED`.
+9. Honor every stop condition: write `.claude/escalations.md` and halt rather than forcing
    completion or taking an unauthorized outward action.
-7. Never edit specs or `discovery/` during implementation — spec changes belong to architect
+10. Never edit specs or `discovery/` during implementation — spec changes belong to architect
    review.
-8. Respect the assigned runtime roles. If `implementation_runtime` and `review_runtime`
+11. Respect the assigned runtime roles. If `implementation_runtime` and `review_runtime`
    differ, the implementation runtime builds reviewed stories and the review runtime owns the
    review/promotion gates.
 

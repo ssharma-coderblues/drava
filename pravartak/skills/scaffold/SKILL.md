@@ -53,7 +53,8 @@ document is authoritative for the mechanics; the phases below are the contract i
 3. **Template rendering** — render every `pravartak/templates/*.template` with the
    project's values, writing each to its target with an inline provenance header (where the
    file type supports comments). This includes `PRAVARTAK.md`, the Claude compatibility
-   wrapper, and explicit Claude/Codex runtime docs.
+   wrapper, explicit Claude/Codex runtime docs, `scripts/no-delete-guard.sh`,
+   `scripts/codex-auto.sh`, and `.pravartak/session-state.json`.
 4. **Language pack application** — read `pravartak/language-packs/<lang>/PACK.md` and follow
    it: install the gate, copy language templates, set up isolation, verify required tools.
    Fail early with a clear message if a required tool is missing.
@@ -90,7 +91,8 @@ document is authoritative for the mechanics; the phases below are the contract i
 
 - A populated `discovery/`, a draft `.claude/backlog.md`, and the full `.claude/` layout.
 - Rendered `PRAVARTAK.md`, `CLAUDE.md`, runtime adapter docs, `.claude/settings.json`,
-  `.claude/scripts/gate.sh`, and language config.
+  `.claude/scripts/gate.sh`, `scripts/no-delete-guard.sh`, `scripts/codex-auto.sh`,
+  `.pravartak/session-state.json`, and language config.
 - Command pointers in `.claude/commands/` for every universal command.
 - Initialized state files; a passing smoke test.
 - `.pravartak/manifest.json` (schema-valid).

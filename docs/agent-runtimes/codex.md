@@ -1,4 +1,4 @@
-<!-- pravartak: template=codex-runtime.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+<!-- pravartak: template=codex-runtime.md.template version=0.5.0 generated=2026-06-23T01:44:35Z -->
 # Codex Runtime Adapter
 
 This document is the Codex-specific operating surface for `drava`.
@@ -34,6 +34,23 @@ Read PRAVARTAK.md, this Codex adapter guide, and pravartak/skills/architect-revi
 ```text
 Read PRAVARTAK.md, this Codex adapter guide, and pravartak/skills/autonomous-loop/SKILL.md. Act as the autonomous_runtime for this project. Resume from the standard Pravartak state files, implement the next eligible reviewed story, and continue until the backlog is empty or a stop condition fires.
 ```
+
+Recommended launch command:
+
+```bash
+MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 codex exec --sandbox danger-full-access --ask-for-approval never "<Pravartak autonomous prompt>"
+```
+
+The generated helper wraps that command and adds the persisted daily budget preflight:
+
+```bash
+MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 scripts/codex-auto.sh
+```
+
+Codex must run `scripts/codex-auto.sh --check-budget` before selecting each story and must
+run `scripts/no-delete-guard.sh --check-diff` before commits and after integration. If the
+budget is exhausted, exit cleanly with `BUDGET_EXHAUSTED`. If any delete or rename is
+required, stop with `BLOCKED_DELETION_REQUIRED`.
 
 ## Codex implement + Claude review
 

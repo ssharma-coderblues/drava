@@ -34,3 +34,6 @@ htmlcov/
 .env.*
 *.pem
 *.key
+
+# Pravartak runtime scratch files
+.pravartak/*.tmp

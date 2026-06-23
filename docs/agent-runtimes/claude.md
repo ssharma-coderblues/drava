@@ -1,4 +1,4 @@
-<!-- pravartak: template=claude-runtime.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+<!-- pravartak: template=claude-runtime.md.template version=0.5.0 generated=2026-06-23T01:44:35Z -->
 # Claude Runtime Adapter
 
 This document is the Claude-specific operating surface for `drava`.
@@ -22,9 +22,13 @@ Read order for any Claude session:
 Use the verified Claude launcher path:
 
 ```bash
+MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 \
 claude --permission-mode auto --effort xhigh --max-budget-usd <N> \
   -p "Read PRAVARTAK.md, docs/agent-runtimes/claude.md, and pravartak/skills/autonomous-loop/SKILL.md. Execute the autonomous workflow protocol for this repository."
 ```
+
+The generated Bash hook runs `scripts/no-delete-guard.sh --hook` before every Bash command,
+and the loop must check `.pravartak/session-state.json` before selecting each story.
 
 This adapter can be used whenever `autonomous_runtime: claude` is selected in
 `PRAVARTAK.md`.

@@ -18,74 +18,20 @@
   },
   "files": [
     {
-      "path": "PRAVARTAK.md",
-      "template": "pravartak/templates/PRAVARTAK.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:38cd2952b151dfae037c970ba93d76d8817222ac15b6cb46e4dcfe87f0f91205",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": "CLAUDE.md",
-      "template": "pravartak/templates/CLAUDE.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:9255184bb4c336d2a978ac823569a24601952eaece76e1a502123c31d046e8ae",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": ".claude/settings.json",
-      "template": "pravartak/templates/settings.json.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:66a947630aa45e6ecc601b8bbd13ab4db5cff2a9884160c5df3f107592e66ff0",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": ".gitignore",
-      "template": "pravartak/templates/gitignore.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:9d141e9f5519853e55e3a417c1adc06bdf0defa12d6ac5f5a17131c27acb0638",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": "docs/agent-runtimes/claude.md",
-      "template": "pravartak/templates/claude-runtime.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:dd22664988be55d4f3102fb617b10ca9494176262cfc1c488b51096488ca2d1e",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": "docs/agent-runtimes/codex.md",
-      "template": "pravartak/templates/codex-runtime.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:d6debf2148c17c2546eacc30b1e0275c91a09bc65ca622976b0394fbb83b3850",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": ".claude/backlog.md",
-      "template": "pravartak/templates/backlog.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:57dd85fbfd1d4134848612b2d6a59aa17c1104008574989c9e3fb8361757f0be",
-      "ownership": "project",
-      "upgrade_strategy": "preserve-on-conflict"
-    },
-    {
       "path": ".claude/architect_review/progress.md",
       "template": "pravartak/templates/progress.md.template",
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
       "content_hash_at_generation": "sha256:fc8740cc6fcb1e897fccdee4f48eededb90cbf3158f9547259089d6cb51c6e6f",
+      "ownership": "project",
+      "upgrade_strategy": "preserve-on-conflict"
+    },
+    {
+      "path": ".claude/architect_review/scope_additions.md",
+      "template": "pravartak/templates/scope_additions.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:59b9f8e4789ecead8ac7cfadde287b76784724d48153f30d4abbfb1dc6c9afcd",
       "ownership": "project",
       "upgrade_strategy": "preserve-on-conflict"
     },
@@ -108,20 +54,11 @@
       "upgrade_strategy": "preserve-on-conflict"
     },
     {
-      "path": ".claude/architect_review/scope_additions.md",
-      "template": "pravartak/templates/scope_additions.md.template",
+      "path": ".claude/backlog.md",
+      "template": "pravartak/templates/backlog.md.template",
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:59b9f8e4789ecead8ac7cfadde287b76784724d48153f30d4abbfb1dc6c9afcd",
-      "ownership": "project",
-      "upgrade_strategy": "preserve-on-conflict"
-    },
-    {
-      "path": ".claude/completed.md",
-      "template": "pravartak/templates/completed.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:15ad9a4d5157723914fef08a3076489ab10628de0a6c38d63c158ee0440609d5",
+      "content_hash_at_generation": "sha256:57dd85fbfd1d4134848612b2d6a59aa17c1104008574989c9e3fb8361757f0be",
       "ownership": "project",
       "upgrade_strategy": "preserve-on-conflict"
     },
@@ -131,60 +68,6 @@
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
       "content_hash_at_generation": "sha256:1824ae3da721e9bfb407192d69d911c86ba9f504b9c109ac6740eb186a5ff307",
-      "ownership": "project",
-      "upgrade_strategy": "preserve-on-conflict"
-    },
-    {
-      "path": ".claude/escalations.md",
-      "template": "pravartak/templates/escalations.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:76392819a6cf7f02bd56abfce4c823c62380ddf80864a652fd84e68553ff2b2b",
-      "ownership": "project",
-      "upgrade_strategy": "preserve-on-conflict"
-    },
-    {
-      "path": ".claude/current_story.md",
-      "template": "pravartak/templates/current_story.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:a2a205b35d6512a85ea638e2f9089b857a9d0fb46a3b8e2ba35fe421eb6ec62a",
-      "ownership": "project",
-      "upgrade_strategy": "preserve-on-conflict"
-    },
-    {
-      "path": ".claude/reviews/README.md",
-      "template": "pravartak/templates/reviews-README.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:a5d001dedcdc5adadbff9b62c3f1d9df2b088227c0a26b50613a1b90750f4e57",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": "docs/sprint-reports/README.md",
-      "template": "pravartak/templates/sprint-reports-README.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:39f9186822fd3d4623459dbaf2c5bfff69d695a433ee95bdb3f6e738a5afce78",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": ".claude/sprint-reports/README.md",
-      "template": "pravartak/templates/sprint-reports-README.md.template",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:c64b528f25a45b9e829f04d0596a542a4ebc80d4a704ad52df288d582a50642e",
-      "ownership": "project",
-      "upgrade_strategy": "diff-and-prompt"
-    },
-    {
-      "path": ".claude/commit_log.txt",
-      "template": "pravartak/templates/commit_log.txt",
-      "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "ownership": "project",
       "upgrade_strategy": "preserve-on-conflict"
     },
@@ -261,20 +144,56 @@
       "upgrade_strategy": "always-replace"
     },
     {
-      "path": "package.json",
-      "template": "pravartak/language-packs/typescript/package.json.template",
+      "path": ".claude/commit_log.txt",
+      "template": "pravartak/templates/commit_log.txt",
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:bd76d834260d8aa7208bf51ee549a6a694289ae4bc0d3f5b9e5114496fd10ad5",
+      "content_hash_at_generation": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "project",
+      "upgrade_strategy": "preserve-on-conflict"
+    },
+    {
+      "path": ".claude/completed.md",
+      "template": "pravartak/templates/completed.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:15ad9a4d5157723914fef08a3076489ab10628de0a6c38d63c158ee0440609d5",
+      "ownership": "project",
+      "upgrade_strategy": "preserve-on-conflict"
+    },
+    {
+      "path": ".claude/current_story.md",
+      "template": "pravartak/templates/current_story.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:a2a205b35d6512a85ea638e2f9089b857a9d0fb46a3b8e2ba35fe421eb6ec62a",
+      "ownership": "project",
+      "upgrade_strategy": "preserve-on-conflict"
+    },
+    {
+      "path": ".claude/escalations.md",
+      "template": "pravartak/templates/escalations.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:76392819a6cf7f02bd56abfce4c823c62380ddf80864a652fd84e68553ff2b2b",
+      "ownership": "project",
+      "upgrade_strategy": "preserve-on-conflict"
+    },
+    {
+      "path": ".claude/reviews/README.md",
+      "template": "pravartak/templates/reviews-README.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:a5d001dedcdc5adadbff9b62c3f1d9df2b088227c0a26b50613a1b90750f4e57",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
     {
-      "path": "tsconfig.base.json",
-      "template": "pravartak/language-packs/typescript/tsconfig.json.template",
+      "path": ".claude/scripts/delta-coverage.mjs",
+      "template": "pravartak/language-packs/typescript/delta-coverage.mjs",
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:915b8a3282d6d8a56284918b33db516c95af619874bf6bc736792825c33d5640",
+      "content_hash_at_generation": "sha256:c75612ad25171e771c359e609d784f5059c92aeb9e2215373e3c585967560f9e",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -288,11 +207,56 @@
       "upgrade_strategy": "diff-and-prompt"
     },
     {
-      "path": ".claude/scripts/delta-coverage.mjs",
-      "template": "pravartak/language-packs/typescript/delta-coverage.mjs",
+      "path": ".claude/settings.json",
+      "template": "pravartak/templates/settings.json.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:8ca765dc23801bd6c0e52dcaff6a01dee5bd2382ccea030ea26fd821fc224d79",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": ".claude/sprint-reports/README.md",
+      "template": "pravartak/templates/sprint-reports-README.md.template",
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:c75612ad25171e771c359e609d784f5059c92aeb9e2215373e3c585967560f9e",
+      "content_hash_at_generation": "sha256:c64b528f25a45b9e829f04d0596a542a4ebc80d4a704ad52df288d582a50642e",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": ".gitignore",
+      "template": "pravartak/templates/gitignore.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:9d141e9f5519853e55e3a417c1adc06bdf0defa12d6ac5f5a17131c27acb0638",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": ".pravartak/session-state.json",
+      "template": "pravartak/templates/session-state.json.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:a54784e6dd3e951a5e4c9016acf04a795abbc696da99ad6a6e93e5d2854bf3c1",
+      "ownership": "project",
+      "upgrade_strategy": "preserve-on-conflict"
+    },
+    {
+      "path": "CLAUDE.md",
+      "template": "pravartak/templates/CLAUDE.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:5cd28c40180e886a0d25611a2ed67981d42c621360425c1245f5756687e4f4e7",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "discovery/CONTRADICTIONS.md",
+      "template": "pravartak/ingestion/loose-docs/INGESTION.md",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:0c39b6b0b82981d005d358d3f1d15bc449b9c80317cd5fc3f1851d23b0156272",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -315,6 +279,15 @@
       "upgrade_strategy": "diff-and-prompt"
     },
     {
+      "path": "discovery/README.md",
+      "template": "pravartak/ingestion/loose-docs/INGESTION.md",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:87fa08e761b44d172e6a85b3878c1b529c7e92d01df2401750df167437ed79c8",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
       "path": "discovery/SYNTHESIS.md",
       "template": "pravartak/ingestion/loose-docs/INGESTION.md",
       "generated_by_version": "0.5.0",
@@ -324,20 +297,74 @@
       "upgrade_strategy": "diff-and-prompt"
     },
     {
-      "path": "discovery/CONTRADICTIONS.md",
-      "template": "pravartak/ingestion/loose-docs/INGESTION.md",
+      "path": "docs/agent-runtimes/claude.md",
+      "template": "pravartak/templates/claude-runtime.md.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:0c39b6b0b82981d005d358d3f1d15bc449b9c80317cd5fc3f1851d23b0156272",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:2b52d4324ca5d7fba0d8a7b38c62f896650d0567a3aa099c079c1476b599d348",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
     {
-      "path": "discovery/README.md",
-      "template": "pravartak/ingestion/loose-docs/INGESTION.md",
+      "path": "docs/agent-runtimes/codex.md",
+      "template": "pravartak/templates/codex-runtime.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:4aa4b9d812493540fa74ce9f960fd9d88463db3266f4f14c495b78a9ea905eab",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "docs/sprint-reports/README.md",
+      "template": "pravartak/templates/sprint-reports-README.md.template",
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:87fa08e761b44d172e6a85b3878c1b529c7e92d01df2401750df167437ed79c8",
+      "content_hash_at_generation": "sha256:39f9186822fd3d4623459dbaf2c5bfff69d695a433ee95bdb3f6e738a5afce78",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "package.json",
+      "template": "pravartak/language-packs/typescript/package.json.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:bd76d834260d8aa7208bf51ee549a6a694289ae4bc0d3f5b9e5114496fd10ad5",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "PRAVARTAK.md",
+      "template": "pravartak/templates/PRAVARTAK.md.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:38cd2952b151dfae037c970ba93d76d8817222ac15b6cb46e4dcfe87f0f91205",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "scripts/codex-auto.sh",
+      "template": "pravartak/templates/codex-auto.sh.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:6cebf40f4f30d1a9ccd229a683dda4590fd3b3b0ac3de37d26e192e7cb1931b6",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "scripts/no-delete-guard.sh",
+      "template": "pravartak/templates/no-delete-guard.sh.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-23T01:46:54Z",
+      "content_hash_at_generation": "sha256:fcc93de7d02e4bb08c57f56b4c1789e2236f5c8b0124a82ba53911147900397b",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "tsconfig.base.json",
+      "template": "pravartak/language-packs/typescript/tsconfig.json.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-22T22:45:10Z",
+      "content_hash_at_generation": "sha256:915b8a3282d6d8a56284918b33db516c95af619874bf6bc736792825c33d5640",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     }

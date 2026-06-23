@@ -1,4 +1,4 @@
-<!-- pravartak: template=CLAUDE.md.template version=0.5.0 generated=2026-06-22T22:45:10Z -->
+<!-- pravartak: template=CLAUDE.md.template version=0.5.0 generated=2026-06-23T01:44:35Z -->
 # drava — Claude Adapter Guide
 
 This file preserves **Claude compatibility** for a Pravartak-managed project. The canonical,
@@ -28,6 +28,7 @@ For every Claude session:
 Use the verified Claude adapter launcher from `docs/agent-runtimes/claude.md`:
 
 ```bash
+MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 \
 claude --permission-mode auto --effort xhigh --max-budget-usd <N> \
   -p "Read PRAVARTAK.md, docs/agent-runtimes/claude.md, and pravartak/skills/autonomous-loop/SKILL.md. Execute the autonomous workflow protocol for this repository."
 ```
@@ -35,7 +36,7 @@ claude --permission-mode auto --effort xhigh --max-budget-usd <N> \
 ## Architect overrides
 
 - Codex is the primary runtime for scaffold, review, implementation, and autonomous execution.
-- Preserve the existing Wave-Planner PoC as planning/reference material until architect review decides whether it becomes production code.
+- Wave-Planner PoC (`poc-wave-planner/`) is reference material only (decided 2026-06-22). Excluded from production build targets. No engineering time allocated to productionizing it.
 - Treat `docs/Drava_Project_Specification.docx` and `docs/Drava_Executive_Summary.docx` as authoritative source material snapshots.
 - `promotion: external` until CI and branch-protection policy are explicitly configured.
 - `tracker_sync: off` until a Linear connector/filter is configured and reviewed.

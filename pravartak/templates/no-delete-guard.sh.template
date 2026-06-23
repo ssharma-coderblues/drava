@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+# pravartak: template=no-delete-guard.sh.template version={{PRAVARTAK_VERSION}} generated={{SCAFFOLD_DATE}}
+#
+# Hard no-delete guard for Pravartak autonomous mode.
+#
+# The autonomous loop may edit lines inside tracked files and may add new files. It must not
+# delete files, rename files, or run destructive cleanup commands. If a story truly needs a
+# deletion, stop and report BLOCKED_DELETION_REQUIRED.
+
+set -euo pipefail
+
+ROOT="${PRAVARTAK_PROJECT_ROOT:-}"
+if [ -z "$ROOT" ]; then
+  ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+
+block() {
+  printf 'BLOCKED_DELETION_REQUIRED: %s\n' "$1" >&2
+  exit 42
+}
+
+extract_command_from_hook() {
+  local payload
+  payload="$(cat)"
+  if command -v jq >/dev/null 2>&1; then
+    printf '%s' "$payload" | jq -r '.tool_input.command // .command // ""' 2>/dev/null || true
+  else
+    printf '%s' "$payload" |
+      sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+      head -n 1
+  fi
+}
+
+tracked_path() {
+  git -C "$ROOT" ls-files --error-unmatch -- "$1" >/dev/null 2>&1
+}
+
+check_mv_command() {
+  local command="$1"
+  # This intentionally supports only simple, unquoted mv forms. Complex shell command lines
+  # are treated conservatively by check_command's generic mv denial below.
+  # shellcheck disable=SC2206
+  local parts=( $command )
+  local count="${#parts[@]}"
+  local src dest i
+
+  [ "$count" -ge 3 ] || return 0
+  dest="${parts[$((count - 1))]}"
+
+  if tracked_path "$dest"; then
+    block "mv would replace tracked file: $dest"
+  fi
+
+  for ((i = 1; i < count - 1; i += 1)); do
+    src="${parts[$i]}"
+    case "$src" in
+      -*) continue ;;
+    esac
+    if tracked_path "$src"; then
+      block "mv would remove or rename tracked file: $src"
+    fi
+  done
+}
+
+check_command() {
+  local command="$1"
+
+  if printf '%s\n' "$command" | grep -Eq '(^|[;&|[:space:]])(sudo[[:space:]]+)?(rm|rmdir|unlink)([[:space:]]|$)'; then
+    block "destructive command is not allowed: $command"
+  fi
+  if printf '%s\n' "$command" | grep -Eq '(^|[;&|[:space:]])git[[:space:]]+clean([[:space:]]|$)'; then
+    block "git clean is not allowed: $command"
+  fi
+  if printf '%s\n' "$command" | grep -Eq '(^|[[:space:];&|])git[[:space:]]+reset[^;&|]*--hard([[:space:]]|$)'; then
+    block "git reset --hard is not allowed: $command"
+  fi
+  if printf '%s\n' "$command" | grep -Eq '(^|[[:space:];&|])git[[:space:]]+checkout[^;&|]*[[:space:]]--([[:space:]]|$)'; then
+    block "git checkout -- is not allowed: $command"
+  fi
+  if printf '%s\n' "$command" | grep -Eq '(^|[;&|[:space:]])git[[:space:]]+restore([[:space:]]|$)'; then
+    block "git restore is not allowed: $command"
+  fi
+  if printf '%s\n' "$command" | grep -Eq '(^|[;&|[:space:]])(sudo[[:space:]]+)?mv([[:space:]]|$)'; then
+    case "$command" in
+      mv\ *) check_mv_command "$command" ;;
+      *) block "complex mv command is not allowed in autonomous mode: $command" ;;
+    esac
+  fi
+}
+
+check_diff() {
+  local diff_status
+  if ! git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 0
+  fi
+
+  diff_status="$(git -C "$ROOT" diff --name-status --find-renames --diff-filter=DR HEAD -- 2>/dev/null || true)"
+  if [ -n "$diff_status" ]; then
+    printf '%s\n' "$diff_status" >&2
+    block "tracked file deletion or rename detected in git diff"
+  fi
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/no-delete-guard.sh --check-command "<command>"
+  scripts/no-delete-guard.sh --check-diff
+  scripts/no-delete-guard.sh --hook
+
+Exit 0 allows the action. Exit 42 means BLOCKED_DELETION_REQUIRED.
+EOF
+}
+
+case "${1:---check-diff}" in
+  --check-command)
+    shift
+    check_command "$*"
+    ;;
+  --check-diff)
+    check_diff
+    ;;
+  --hook)
+    command_str="$(extract_command_from_hook)"
+    [ -n "$command_str" ] && check_command "$command_str"
+    case "$command_str" in
+      *"git commit"*) check_diff ;;
+    esac
+    ;;
+  -h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac

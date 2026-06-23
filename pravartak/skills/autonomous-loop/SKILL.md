@@ -61,8 +61,9 @@ On launch:
    `docs/agent-runtimes/codex.md`).
 3. Read this file (`pravartak/skills/autonomous-loop/SKILL.md`) for the execution procedure.
 4. Read the standards under `pravartak/standards/` that the project's stories touch.
-5. Run the repo-ownership pre-check (§6.0) and the resume check (§5).
-6. Start at the first unchecked story in `.claude/backlog.md` whose dependencies are complete.
+5. Run the repo-ownership pre-check (§6.0) and the resume check (§5.2).
+6. Run the no-delete guard and daily budget preflight (§5.1), then start at the first
+   unchecked story in `.claude/backlog.md` whose dependencies are complete.
 7. Continue until the backlog is empty or a stop condition fires (§7).
 
 **Precondition — review is complete.** This loop reads `.claude/backlog.md` as-is and assumes
@@ -84,6 +85,7 @@ still runs, but the result may not match architect intent (spec §14.8).
 | `gate_strictness` | `strict` | `strict`: block on any warning. `lenient`: allow warnings, block on errors. |
 | `sprint_cadence` | by story batch | `weekly` (or other): produce sprint tags on that cadence regardless of story count. |
 | `branch_pattern` | `feature/<project>-<story-id>-<slug>` | Feature-branch naming. |
+| `max_stories_per_day` | `10` | Maximum completed stories per UTC day. The persisted `.pravartak/session-state.json` value is authoritative for the current day, and `MAX_STORIES_PER_DAY` overrides it for one launch. |
 | `tracker_sync` | `off` | `on`: for issue-tracker archetypes (`jira`/`linear`), update the corresponding tracker issue to its done state when a story completes (§6.6), via the archetype's `connector.md`. Opt-in; the project's own tracker only. |
 | `tracker_done_state` | archetype default | The target tracker status/state for write-back (e.g. `Done`) when not the tracker's default completed state. |
 
@@ -102,9 +104,33 @@ has no `origin` remote (`git remote get-url origin` fails), operate in **local-o
 | `.claude/blocked.md` | Stories that could not proceed (with reason). |
 | `.claude/escalations.md` | Stop-condition context written on halt (§7). |
 | `.claude/commit_log.txt` | Running log of commits made by the loop. |
+| `.pravartak/session-state.json` | Daily autonomous session budget: `date`, `completedToday`, `maxStoriesPerDay`, `lastStartedStory`, `lastCompletedStory`. |
 | `docs/sprint-reports/sprint-<n>.md` | Per-sprint summaries (§8). |
 
-## 5. Resume check (run first, every launch)
+## 5. Pre-story Checks And Resume
+
+### 5.1 No-delete and daily-budget preflight (before selecting work)
+
+Before picking any next story, run the executable guards generated into the project:
+
+1. Run `scripts/no-delete-guard.sh --check-diff`. If it reports a delete or rename status,
+   halt with `BLOCKED_DELETION_REQUIRED` and write the diff status to
+   `.claude/escalations.md`. Do not continue by deleting, renaming, or cleaning up files.
+2. Read `.pravartak/session-state.json`. If `MAX_STORIES_PER_DAY` is set, update
+   `maxStoriesPerDay` for this run. Otherwise use the persisted `maxStoriesPerDay`, default
+   `10` if absent.
+3. Compare `date` to today's UTC date (`YYYY-MM-DD`). If the date changed, set `date` to
+   today and reset `completedToday` to `0`; preserve `maxStoriesPerDay` and the story
+   pointers.
+4. If `completedToday >= maxStoriesPerDay`, exit cleanly with `BUDGET_EXHAUSTED`. This is a
+   successful bounded-session stop, not an error.
+5. After selecting a story, record it as `lastStartedStory` before implementation begins.
+
+The generated `scripts/codex-auto.sh --check-budget` and `--mark-started <STORY-ID>` commands
+implement this state transition for Codex launches. Other runtimes must perform the same
+state transition if they do not use the helper.
+
+### 5.2 Resume check (run first, every launch)
 
 Before starting any new story:
 
@@ -115,8 +141,8 @@ Before starting any new story:
    the working tree and the feature branch to determine progress.
 3. Read `.claude/blocked.md` so you don't re-attempt a story known to be blocked unless its
    blocker is resolved.
-4. Otherwise, select the first unchecked story in `.claude/backlog.md` whose dependencies are
-   all complete.
+4. Otherwise, run §5.1, then select the first unchecked story in `.claude/backlog.md` whose
+   dependencies are all complete.
 
 Never double-process a story already checked `[x]` in the backlog or present in `completed.md`.
 
@@ -151,11 +177,13 @@ loop builds what you own; anything touching other teams' repos is human-driven d
 2. Confirm acceptance criteria are inferable from the spec. If not, escalate
    (`acceptance criteria cannot be inferred`, §7).
 3. Record the story in `.claude/current_story.md`.
-4. **Ensure the integration branch exists.** If `integration_branch` does not exist yet,
+4. Record the story id in `.pravartak/session-state.json` as `lastStartedStory` (or run
+   `scripts/codex-auto.sh --mark-started <STORY-ID>`).
+5. **Ensure the integration branch exists.** If `integration_branch` does not exist yet,
    create it off the default branch on this first touch
    (`git checkout <default-branch> && git checkout -b <integration_branch>`), and push it in
    remote modes. Otherwise check it out and fast-forward it to its remote tip.
-5. **Cut the feature branch from the integration branch** (not from the default branch), using
+6. **Cut the feature branch from the integration branch** (not from the default branch), using
    `branch_pattern`: `git checkout -b feature/<project>-<story-id>-<slug> <integration_branch>`.
 
 ### 6.2 Implement with TDD
@@ -174,6 +202,10 @@ Every file the loop creates gets the project's inline provenance header where th
 supports comments (the loop generates project source; see the scaffold's manifest for the
 header format).
 
+Line-level edits inside existing files are allowed. File deletions and renames are not. If an
+acceptance criterion appears to require deleting, moving, or renaming a file, stop immediately
+and report `BLOCKED_DELETION_REQUIRED`; do not attempt an equivalent cleanup.
+
 ### 6.3 Quality gates (local)
 
 Run `.claude/scripts/gate.sh`. Honor `gate_strictness` and `coverage_threshold`. The gate runs,
@@ -191,6 +223,10 @@ Commit the work (one commit per story, story-id-prefixed message). The `PreToolU
 `"hooks"` key — spec §14.4). If the hook blocks, treat it as a gate failure and return to §6.3.
 Append the commit to `.claude/commit_log.txt`.
 
+Before committing, run `scripts/no-delete-guard.sh --check-diff`. The commit is blocked if
+`git diff` contains `D` or `R` status entries. Renames are unsupported in autonomous mode
+because they are delete/add operations from the safety model's perspective.
+
 ### 6.5 Integrate — merge into the integration branch (never `main`)
 
 Integration happens only on a **clean gate pass**. Behavior depends on `git_workflow` (§3):
@@ -201,9 +237,10 @@ Integration happens only on a **clean gate pass**. Behavior depends on `git_work
 2. Check out the integration branch and merge the feature branch into it with no fast-forward:
    `git checkout <integration_branch> && git merge --no-ff <feature-branch>` with a merge-commit
    message referencing the story id. **Gate-pass is the approval — do not ask a human per merge.**
-3. **Re-run the gate against the integration branch post-merge.** If it fails, undo the merge
-   (`git reset --hard` to the pre-merge commit on the integration branch) and escalate — never
-   leave a broken integration branch.
+3. **Re-run the no-delete guard and the gate against the integration branch post-merge.** If
+   either fails, do not push the integration branch. Halt and escalate with the pre-merge
+   commit, merge commit, guard/gate output, and repair instructions for a human. Do not use
+   `git reset --hard`, `git checkout --`, `git restore`, or any deletion-based cleanup.
 4. Push the integration branch: `git push origin <integration_branch>`.
 5. **Do not delete the feature branch** and **do not touch `main`** (spec §14.7, §14.9).
    Feature branches are kept until their work reaches `main` via the downstream
@@ -220,7 +257,8 @@ Integration happens only on a **clean gate pass**. Behavior depends on `git_work
 
 1. Do not push.
 2. Check out the integration branch and merge the feature branch into it locally with `--no-ff`.
-3. Re-run the gate against the integration branch; on failure, undo the merge and escalate.
+3. Re-run the no-delete guard and the gate against the integration branch; on failure, halt
+   and escalate with the true local state. Do not undo with destructive commands.
 4. Do not delete the feature branch; no remote operations.
 
 ### 6.6 Finish the story
@@ -231,7 +269,11 @@ honest completion). Then:
 1. Mark the story `[x]` in `.claude/backlog.md`.
 2. Append the story to `.claude/completed.md` (id, title, feature branch, merge-commit/PR
    reference, timestamp).
-3. **Tracker write-back (opt-in).** If `tracker_sync: on` and the project uses an issue-tracker
+3. Update `.pravartak/session-state.json` only after the story commit and configured
+   integration step have succeeded. Increment `completedToday` by one and set
+   `lastCompletedStory` to the story id. Never increment after a failed commit, failed push,
+   failed PR creation, failed local integration, blocked story, or partial implementation.
+4. **Tracker write-back (opt-in).** If `tracker_sync: on` and the project uses an issue-tracker
    archetype (`jira`/`linear`), update the corresponding tracker issue to its done state via
    the archetype's `connector.md` write-back (resolve the issue from the story's `[KEY]`
    identifier). This is an outward action on the **project's own tracker**, authorized solely
@@ -239,8 +281,8 @@ honest completion). Then:
    (consistent with §7's irreversible/outward-action stop condition). If the write-back fails
    (auth/permission/unknown state), escalate rather than reporting the tracker as synced. When
    `tracker_sync: off`, skip this step entirely.
-4. Clear `.claude/current_story.md`.
-5. Proceed to the next story (back to §5's selection, step 4).
+5. Clear `.claude/current_story.md`.
+6. Proceed to the next story (back to §5's selection, step 4).
 
 If the story could not pass, do **not** mark it complete and do **not** merge partial work —
 escalate (§7) or block (§7, soft) with the true state.
@@ -259,6 +301,11 @@ the loop**:
   what change is needed and halt (architect-review will handle it, queuing a corrective story if
   needed).
 - The auto-mode classifier blocks an action and no safe alternative exists.
+- **File deletion or rename required.** A story requires deleting, moving, or renaming a file,
+  or the working tree contains `D`/`R` git diff status entries. Halt with
+  `BLOCKED_DELETION_REQUIRED`; do not proceed with an equivalent cleanup.
+- Daily budget exhausted: `completedToday >= maxStoriesPerDay`. Exit cleanly with
+  `BUDGET_EXHAUSTED` before selecting another story.
 - **Repo-ownership boundary (spec §14.11).** A story requires writing to, branching on, or
   pushing to a repository the session does not own a real working checkout of (a
   read-only/shallow analysis clone, or another team's repo — see §6.0). The loop must NOT push
@@ -305,10 +352,15 @@ present in `completed.md`.
   open a PR against a repo the session does not own a real working checkout of.
 - **Never take an unauthorized outward/irreversible action.** Pause and ask; a literal reading
   of instructions does not grant authorization (spec §11.4).
+- **Never delete or rename files in autonomous mode.** Block `D` and `R` git diff statuses.
+  Do not run `rm`, `rmdir`, `unlink`, `git clean`, `git reset --hard`, `git checkout --`,
+  `git restore`, destructive `mv`, or equivalent cleanup. If a deletion is genuinely
+  required, halt with `BLOCKED_DELETION_REQUIRED`.
 - **Honest completion only.** Mark a story complete only if it genuinely passed the full gate;
   never fabricate a passing gate or report COMPLETE for unbuilt/untested work (spec §14.10).
-- **Never leave a broken integration branch.** Always re-run the gate post-merge and undo on
-  failure.
+- **Never push a broken integration branch.** Always re-run the no-delete guard and gate
+  post-merge. If either fails, halt before push and report the exact state for attended
+  repair.
 - **Never edit specs or `discovery/`.** Spec changes are architect-review's job; halt and
   escalate if one is needed.
 - **Do not delete feature branches.** Cleanup is a downstream hygiene step after integration→
@@ -316,6 +368,8 @@ present in `completed.md`.
 - **Never skip the pre-check or the resume check.** Double-processing a story corrupts state.
 - **Respect the budget.** `--max-budget-usd` is a hard ceiling; if approaching it, finish the
   current story cleanly, record state, and stop rather than leaving work half-done.
+- **Respect the daily story budget.** `.pravartak/session-state.json` is checked before each
+  new story. Stop with `BUDGET_EXHAUSTED` when the daily budget is spent.
 
 ## 11. Outputs
 
