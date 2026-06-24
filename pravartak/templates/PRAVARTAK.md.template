@@ -34,6 +34,7 @@ compatibility. Treat those files as Pravartak protocol state, not as Claude-only
   {{LANGUAGE_VERSION_LOCAL}}
 - **Quality gate:** `.claude/scripts/gate.sh` (`{{QUALITY_GATE_COMMAND}}`)
 - **No-delete guard:** `scripts/no-delete-guard.sh`
+- **Autonomous preflight:** `scripts/autonomous-preflight.sh`
 - **Daily autonomous state:** `.pravartak/session-state.json`
 - **Coverage threshold:** {{COVERAGE_THRESHOLD}}%
 - **Default branch:** {{DEFAULT_BRANCH}}
@@ -60,20 +61,28 @@ Defaults are shown; change a line to change behavior.
   integration→`{{DEFAULT_BRANCH}}` PR, runs CI on it, **pauses for explicit human approval**,
   and merges only on human approval AND green CI. `merge_style: squash` squashes the
   promotion PR. In neither mode does the unattended loop merge to `{{DEFAULT_BRANCH}}`.
-- `git_workflow: auto-merge` — on a clean gate pass the loop merges the feature branch into
-  the integration branch directly. Set `pr-based` to open a PR via `gh pr create` targeting
-  the integration branch instead; set `local-only` for no remote operations. In no mode does
-  the loop target `{{DEFAULT_BRANCH}}`.
+- `git_workflow: auto-merge` — unattended runs merge approved, gated feature branches directly
+  into the integration branch and push that branch. Set `pr-based` only for attended sessions
+  where `gh pr create` access has been preflighted; otherwise GitHub API auth becomes a
+  story-level stop condition. Set `local-only` for no remote operations. In no mode does the
+  loop target `{{DEFAULT_BRANCH}}`.
 - `coverage_threshold: {{COVERAGE_THRESHOLD}}` — the gate enforces this; also set in the
   language config.
 - `gate_strictness: strict` — block on any warning. Set `lenient` to allow warnings, block
   on errors.
+- `review_before_completion: required when implementation_runtime != review_runtime` — when
+  implementation and review are assigned to different runtimes, the story is not complete
+  until the review runtime's approval is captured in `.claude/reviews/<STORY-ID>.md`. Set
+  `off` only for projects that intentionally treat gate-pass as the only review.
 - `sprint_cadence: by-story-batch` — sprint tags on story-batch boundaries. Set `weekly`
   (or other) for time-based tags.
 - `branch_pattern: feature/{{PROJECT_NAME_SLUG}}-<story-id>-<slug>` — feature branch naming.
 - `max_stories_per_day: 10` — autonomous mode reads `.pravartak/session-state.json` before
   selecting the next story. Override a run with `MAX_STORIES_PER_DAY=<N>`. If
   `completedToday >= maxStoriesPerDay`, the loop exits cleanly with `BUDGET_EXHAUSTED`.
+- `preflight_required: true` — unattended runs must pass `scripts/autonomous-preflight.sh`
+  before starting a batch. It writes `.pravartak/preflight-report.md` and reports consolidated
+  blockers with `PREFLIGHT_BLOCKED`.
 - `tracker_sync: off` — for `jira`/`linear` archetypes only. Set `on` to transition the
   corresponding tracker issue to its done state when a story completes. `tracker_done_state:
   <state>` overrides the target state if it is not the tracker's default completed state.
@@ -108,30 +117,40 @@ runtime must follow the same protocol:
 2. Read the adapter guide for the assigned runtime:
    `docs/agent-runtimes/claude.md` or `docs/agent-runtimes/codex.md`.
 3. Read `pravartak/skills/autonomous-loop/SKILL.md` for the full execution procedure.
-4. Run `scripts/no-delete-guard.sh --check-diff` and `scripts/codex-auto.sh --check-budget`
+4. Run `scripts/autonomous-preflight.sh`, then `scripts/no-delete-guard.sh --check-diff` and
+   `scripts/codex-auto.sh --check-budget`
    (or the same session-state logic for a non-Codex runtime) before selecting work. If the
-   budget is exhausted, stop with `BUDGET_EXHAUSTED`.
+   preflight reports `PREFLIGHT_BLOCKED`, stop with the consolidated
+   `.pravartak/preflight-report.md`; if the budget is exhausted, stop with `BUDGET_EXHAUSTED`.
 5. Run the resume check (escalations → current_story → blocked → backlog), then start at the
    first unchecked story in `.claude/backlog.md` whose dependencies are complete. Record that
    story in `.pravartak/session-state.json` as `lastStartedStory`.
-6. Per story: ensure the integration branch exists → cut the feature branch → TDD → quality
-   gates (3 retries each) → commit → integrate per `git_workflow` → re-gate the integration
-   branch → push if authorized → mark complete → next.
-7. After the story is committed and pushed successfully, increment `completedToday` and record
-   `lastCompletedStory`. Never increment for failed commits, failed pushes, partial work, or
-   local-only work that did not complete its configured integration step.
-8. No deletes: autonomous mode may edit lines and add files, but must not delete or rename
+6. If `git_workflow: pr-based`, preflight `gh pr create` access before implementation. For
+   Codex, run `scripts/codex-auto.sh --check-pr-access`; if it reports
+   `GH_PR_ACCESS_REQUIRED`, halt before selecting work.
+7. Per story: ensure the integration branch exists → cut the feature branch → TDD → quality
+   gates (3 retries each) → commit the feature branch → run the required story review gate →
+   integrate per `git_workflow` → re-gate the integration branch → push if authorized → mark
+   complete → next.
+8. After the story is committed, approved by any required review gate, integrated/pushed, and
+   passed the post-integration gate,
+   increment `completedToday` and record `lastCompletedStory`. Never increment for failed
+   commits, failed pushes, partial work, unapproved/missing review, or local-only work that did
+   not complete its configured integration step.
+9. No deletes: autonomous mode may edit lines and add files, but must not delete or rename
    files. Block delete and rename/delete git diff statuses. Do not run `rm`, `rmdir`,
    `unlink`, `git clean`, `git reset --hard`, `git checkout --`, `git restore`, destructive
    `mv`, or equivalent cleanup. If a story truly requires a deletion or rename, halt and
    report `BLOCKED_DELETION_REQUIRED`.
-9. Honor every stop condition: write `.claude/escalations.md` and halt rather than forcing
+10. Honor every stop condition: write `.claude/escalations.md` and halt rather than forcing
    completion or taking an unauthorized outward action.
-10. Never edit specs or `discovery/` during implementation — spec changes belong to architect
+11. Never edit specs or `discovery/` during implementation — spec changes belong to architect
    review.
-11. Respect the assigned runtime roles. If `implementation_runtime` and `review_runtime`
+12. Respect the assigned runtime roles. If `implementation_runtime` and `review_runtime`
    differ, the implementation runtime builds reviewed stories and the review runtime owns the
-   review/promotion gates.
+   story-review and promotion gates. Capture each story review in
+   `.claude/reviews/<STORY-ID>.md` with `Verdict: APPROVED` or
+   `Recommendation: APPROVED/PASS` before recording completion.
 
 ## Pipeline reminders
 

@@ -1,4 +1,4 @@
-<!-- pravartak: template=claude-runtime.md.template version=0.5.0 generated=2026-06-23T01:44:35Z -->
+<!-- pravartak: template=claude-runtime.md.template version=0.5.0 generated=2026-06-24T00:11:34Z -->
 # Claude Runtime Adapter
 
 This document is the Claude-specific operating surface for `drava`.
@@ -39,5 +39,12 @@ If `implementation_runtime: codex` and `review_runtime: claude`:
 
 - Claude owns architect review and promotion.
 - Codex implements reviewed backlog stories.
+- For each mixed-runtime story review, write `.claude/reviews/<STORY-ID>.md` with findings
+  first and a final `Verdict: APPROVED`, `Verdict: NEEDS_CHANGES`, or `Verdict: REJECTED`.
+  Codex may only record completion after an approved durable review.
+- For unattended Codex handoffs, prefer `scripts/claude-review.sh <STORY-ID> integration`.
+  It gives Claude a diff-only review prompt, disables tools, writes the durable review file,
+  and stops with `REVIEW_UNAVAILABLE` instead of hanging indefinitely when the Claude CLI/API
+  path is silent.
 - Claude can still use `/status`, `/review-all`, `/review-story`, `/promote`, and the
   `.claude/` compatibility surface unchanged.

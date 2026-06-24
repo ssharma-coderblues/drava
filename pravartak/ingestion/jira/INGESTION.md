@@ -126,7 +126,7 @@ done status via the connector (`connector.md` §write-back). The loop resolves t
 the story's `[CASH-xxx]` key.
 
 Write-back is an **outward action on the project's own Jira project**; the `tracker_sync`
-opt-in is its explicit authorization (see autonomous-loop SKILL.md §6.6 and the
+opt-in is its explicit authorization (see autonomous-loop SKILL.md §6.8 and the
 irreversible/outward-action stop condition §11.4). It is never enabled implicitly and never
 touches another team's project. (Until 0.3.0 this archetype was strictly read-only; write-back
 is new and opt-in, so the default behavior is unchanged.)

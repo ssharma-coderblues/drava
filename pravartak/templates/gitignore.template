@@ -12,6 +12,9 @@
 # Claude adapter per-user local overrides (not shared)
 .claude/settings.local.json
 
+# Pravartak autonomous diagnostics (regenerated per run)
+.pravartak/preflight-report.md
+
 # Language isolation (project-local; never commit the environment itself)
 .venv/
 node_modules/

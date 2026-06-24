@@ -79,7 +79,7 @@ Always order results stably (`ORDER BY key ASC`) so re-runs are deterministic, a
 ## Write-back (opt-in status sync, 0.3.0)
 
 Enabled only when `tracker_sync: on` (see INGESTION.md §6 and PRAVARTAK.md). On completing a
-story, the autonomous loop (SKILL.md §6.6) transitions the corresponding Jira issue to the
+story, the autonomous loop (SKILL.md §6.8) transitions the corresponding Jira issue to the
 done status:
 
 1. Resolve the issue from the story's `[CASH-xxx]` key.

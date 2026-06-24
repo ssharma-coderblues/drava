@@ -9,7 +9,7 @@
       "interactive": "codex",
       "autonomous": "codex",
       "implementation": "codex",
-      "review": "codex"
+      "review": "claude"
     },
     "adapter_surfaces": [
       "claude",
@@ -210,8 +210,8 @@
       "path": ".claude/settings.json",
       "template": "pravartak/templates/settings.json.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-23T01:46:54Z",
-      "content_hash_at_generation": "sha256:8ca765dc23801bd6c0e52dcaff6a01dee5bd2382ccea030ea26fd821fc224d79",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:bbfd0ebc69840d2f5cea8064fdf4bae5367fc435071ce9aff875ac75412f2019",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -228,8 +228,8 @@
       "path": ".gitignore",
       "template": "pravartak/templates/gitignore.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:9d141e9f5519853e55e3a417c1adc06bdf0defa12d6ac5f5a17131c27acb0638",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:f55b88288f877a52307f4f49558f3e7334d6b854db664b728e1ef1a8698657ba",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -246,8 +246,8 @@
       "path": "CLAUDE.md",
       "template": "pravartak/templates/CLAUDE.md.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-23T01:46:54Z",
-      "content_hash_at_generation": "sha256:5cd28c40180e886a0d25611a2ed67981d42c621360425c1245f5756687e4f4e7",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:5616e8c650f3050b29794c4e075ff34286d61f0070b5528eaf4434d130f75bbf",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -300,8 +300,8 @@
       "path": "docs/agent-runtimes/claude.md",
       "template": "pravartak/templates/claude-runtime.md.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-23T01:46:54Z",
-      "content_hash_at_generation": "sha256:2b52d4324ca5d7fba0d8a7b38c62f896650d0567a3aa099c079c1476b599d348",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:5f56bb9e0dfe0069fc4c668881995fd9eb1442b2ba104fa46cf9dcf3320aa9f5",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -309,8 +309,8 @@
       "path": "docs/agent-runtimes/codex.md",
       "template": "pravartak/templates/codex-runtime.md.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-23T01:46:54Z",
-      "content_hash_at_generation": "sha256:4aa4b9d812493540fa74ce9f960fd9d88463db3266f4f14c495b78a9ea905eab",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:85b99051657ab39dda61c5e58166ed98d25f409988a8904e85b1c9f1c3fcf232",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -336,8 +336,8 @@
       "path": "PRAVARTAK.md",
       "template": "pravartak/templates/PRAVARTAK.md.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-22T22:45:10Z",
-      "content_hash_at_generation": "sha256:38cd2952b151dfae037c970ba93d76d8817222ac15b6cb46e4dcfe87f0f91205",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:06b49b93ef83a529ffb263cfa78acd193c537c8e45a643f66c471b701512d9fc",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -345,8 +345,8 @@
       "path": "scripts/codex-auto.sh",
       "template": "pravartak/templates/codex-auto.sh.template",
       "generated_by_version": "0.5.0",
-      "generated_at": "2026-06-23T01:46:54Z",
-      "content_hash_at_generation": "sha256:6cebf40f4f30d1a9ccd229a683dda4590fd3b3b0ac3de37d26e192e7cb1931b6",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:0d10245ed8a3dfdb1764b86f1bcd7e724056c9dfc47c7883e217bcb4761d80dc",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     },
@@ -365,6 +365,24 @@
       "generated_by_version": "0.5.0",
       "generated_at": "2026-06-22T22:45:10Z",
       "content_hash_at_generation": "sha256:915b8a3282d6d8a56284918b33db516c95af619874bf6bc736792825c33d5640",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "scripts/autonomous-preflight.sh",
+      "template": "pravartak/templates/autonomous-preflight.sh.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-24T00:16:18Z",
+      "content_hash_at_generation": "sha256:ffbc3ef425a1c76dd224b0d5a196116ac1961915ba45c77cd8c5ebb29d04e95b",
+      "ownership": "project",
+      "upgrade_strategy": "diff-and-prompt"
+    },
+    {
+      "path": "scripts/claude-review.sh",
+      "template": "pravartak/templates/claude-review.sh.template",
+      "generated_by_version": "0.5.0",
+      "generated_at": "2026-06-24T00:13:40Z",
+      "content_hash_at_generation": "sha256:6f080eba637f851496c8ce50663969f8fa3aef0a02e6eee8d9c1dd4d42bf5f59",
       "ownership": "project",
       "upgrade_strategy": "diff-and-prompt"
     }

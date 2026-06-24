@@ -14,6 +14,10 @@ fi
 
 STATE_FILE="${PRAVARTAK_SESSION_STATE:-$ROOT/.pravartak/session-state.json}"
 NO_DELETE_GUARD="$ROOT/scripts/no-delete-guard.sh"
+AUTONOMOUS_PREFLIGHT="$ROOT/scripts/autonomous-preflight.sh"
+REVIEW_DIR="${PRAVARTAK_REVIEW_DIR:-$ROOT/.claude/reviews}"
+CODEX_BIN="${CODEX_BIN:-codex}"
+CODEX_SANDBOX_MODE="${CODEX_SANDBOX_MODE:-danger-full-access}"
 DEFAULT_MAX=10
 
 need_jq() {
@@ -79,8 +83,107 @@ mark_started() {
   rewrite_state_with --arg story "$story_id" '.lastStartedStory = $story'
 }
 
+review_required() {
+  case "${PRAVARTAK_REVIEW_BEFORE_COMPLETION:-}" in
+    1|true|TRUE|yes|YES|required|REQUIRED|on|ON)
+      return 0
+      ;;
+    0|false|FALSE|no|NO|off|OFF|none|NONE)
+      return 1
+      ;;
+  esac
+
+  [ -f "$ROOT/PRAVARTAK.md" ] || return 1
+
+  if grep -Eiq 'review_before_completion:[[:space:]]*(required|true|yes|on)' "$ROOT/PRAVARTAK.md"; then
+    return 0
+  fi
+
+  local implementation_runtime review_runtime
+  implementation_runtime="$(grep -Eio 'implementation_runtime:[[:space:]]*[[:alnum:]_-]+' "$ROOT/PRAVARTAK.md" 2>/dev/null | head -n 1 | awk -F: '{gsub(/[ `]/, "", $2); print tolower($2)}')"
+  review_runtime="$(grep -Eio 'review_runtime:[[:space:]]*[[:alnum:]_-]+' "$ROOT/PRAVARTAK.md" 2>/dev/null | head -n 1 | awk -F: '{gsub(/[ `]/, "", $2); print tolower($2)}')"
+  if [ -n "$implementation_runtime" ] &&
+    [ -n "$review_runtime" ] &&
+    [ "$implementation_runtime" != "$review_runtime" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
+configured_git_workflow() {
+  local workflow
+  workflow="$(grep -Eio 'git_workflow:[[:space:]]*(auto-merge|pr-based|local-only)' "$ROOT/PRAVARTAK.md" 2>/dev/null | head -n 1 | awk -F: '{gsub(/[ `]/, "", $2); print $2}')"
+  printf '%s\n' "${workflow:-auto-merge}"
+}
+
+origin_repo_slug() {
+  local url slug
+  url="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
+  case "$url" in
+    git@github.com:*.git)
+      slug="${url#git@github.com:}"
+      slug="${slug%.git}"
+      ;;
+    https://github.com/*.git)
+      slug="${url#https://github.com/}"
+      slug="${slug%.git}"
+      ;;
+    https://github.com/*)
+      slug="${url#https://github.com/}"
+      ;;
+    *)
+      slug=""
+      ;;
+  esac
+  printf '%s\n' "$slug"
+}
+
+check_pr_access() {
+  [ "$(configured_git_workflow)" = "pr-based" ] || return 0
+
+  command -v gh >/dev/null 2>&1 || {
+    printf 'GH_PR_ACCESS_REQUIRED: git_workflow is pr-based but gh is not on PATH.\n' >&2
+    exit 66
+  }
+
+  local repo user
+  repo="${PRAVARTAK_GITHUB_REPO:-$(origin_repo_slug)}"
+  [ -n "$repo" ] || {
+    printf 'GH_PR_ACCESS_REQUIRED: could not infer GitHub repo from origin; set PRAVARTAK_GITHUB_REPO.\n' >&2
+    exit 66
+  }
+
+  if ! gh repo view "$repo" --json nameWithOwner,viewerPermission >/dev/null 2>&1; then
+    user="$(gh api user --jq .login 2>/dev/null || printf unknown)"
+    printf 'GH_PR_ACCESS_REQUIRED: gh cannot access %s as %s; fix gh auth or use git_workflow: auto-merge for unattended runs.\n' \
+      "$repo" "$user" >&2
+    exit 66
+  fi
+}
+
+require_approved_review() {
+  local story_id="$1"
+  local review_file="$REVIEW_DIR/$story_id.md"
+
+  review_required || return 0
+
+  if [ ! -f "$review_file" ]; then
+    printf 'REVIEW_REQUIRED: missing %s. Run the configured review_runtime and capture the review before recording %s complete.\n' \
+      "$review_file" "$story_id" >&2
+    exit 65
+  fi
+
+  if ! grep -Eiq '^[[:space:]>#*-]*(Verdict|Recommendation)[[:space:]]*:[[:space:]]*(APPROVED|APPROVE|PASS|ACCEPTED)\b' "$review_file"; then
+    printf 'REVIEW_NOT_APPROVED: %s must contain "Verdict: APPROVED" or "Recommendation: APPROVED/PASS" before recording %s complete.\n' \
+      "$review_file" "$story_id" >&2
+    exit 65
+  fi
+}
+
 record_completed() {
   local story_id="$1"
+  require_approved_review "$story_id"
   normalize_state
   rewrite_state_with --arg story "$story_id" '
     .completedToday = ((.completedToday // 0) + 1)
@@ -104,25 +207,37 @@ autonomous_prompt() {
   cat <<'EOF'
 Read PRAVARTAK.md, docs/agent-runtimes/codex.md, and pravartak/skills/autonomous-loop/SKILL.md. Act as the autonomous_runtime for this project.
 
-Before selecting each new story, run scripts/codex-auto.sh --check-budget. After selecting the story, run scripts/codex-auto.sh --mark-started <STORY-ID>.
+Before starting the autonomous loop, run scripts/autonomous-preflight.sh and halt if it reports PREFLIGHT_BLOCKED. Before selecting each new story, run scripts/codex-auto.sh --check-budget. After selecting the story, run scripts/codex-auto.sh --mark-started <STORY-ID>.
 
 Autonomous mode has a hard no-delete policy. Run scripts/no-delete-guard.sh --check-diff before every commit and after every merge. Never run rm, rmdir, unlink, git clean, git reset --hard, git checkout --, git restore, destructive mv, or equivalent cleanup. If a story requires deleting or renaming a file, stop and report BLOCKED_DELETION_REQUIRED.
 
-Only after a story has been committed and pushed successfully, run scripts/codex-auto.sh --record-completed <STORY-ID>. Continue until the backlog is empty, a stop condition fires, or scripts/codex-auto.sh --check-budget reports BUDGET_EXHAUSTED.
+If git_workflow is pr-based, run scripts/codex-auto.sh --check-pr-access before selecting work. If it reports GH_PR_ACCESS_REQUIRED, halt before implementation. For unattended batches prefer auto-merge: after a clean local gate and feature push, obtain required review before merging to integration; after merge rerun the no-delete guard and full gate before pushing integration.
+
+If review_before_completion is required, or implementation_runtime and review_runtime differ, get the configured review_runtime review before integration and before recording completion. When review_runtime is Claude and scripts/claude-review.sh exists, run scripts/claude-review.sh <STORY-ID> integration instead of invoking Claude directly; it enforces a bounded timeout and writes .claude/reviews/<STORY-ID>.md. If it reports REVIEW_UNAVAILABLE, halt honestly with the durable review file and escalation rather than waiting indefinitely. Approved reviews must contain a clear "Verdict: APPROVED" or "Recommendation: APPROVED/PASS" line. If the review says needs changes, fix the findings and rerun review.
+
+Only after a story has been committed, approved by the configured review gate, integrated/pushed successfully, and passed the post-merge gate, run scripts/codex-auto.sh --record-completed <STORY-ID>. Continue until the backlog is empty, a stop condition fires, or scripts/codex-auto.sh --check-budget reports BUDGET_EXHAUSTED.
 EOF
 }
 
 launch_codex() {
+  if [ "${PRAVARTAK_SKIP_PREFLIGHT:-0}" != "1" ] && [ -x "$AUTONOMOUS_PREFLIGHT" ]; then
+    "$AUTONOMOUS_PREFLIGHT"
+  fi
   check_budget
   if [ -x "$NO_DELETE_GUARD" ]; then
     "$NO_DELETE_GUARD" --check-diff
   fi
+  check_pr_access
   if [ "${PRAVARTAK_DRY_RUN:-0}" = "1" ]; then
     autonomous_prompt
     return 0
   fi
+  command -v "$CODEX_BIN" >/dev/null 2>&1 || {
+    printf 'codex-auto: codex CLI not found on PATH. Set CODEX_BIN=/path/to/codex.\n' >&2
+    exit 64
+  }
   PRAVARTAK_NO_DELETES=1 MAX_STORIES_PER_DAY="${MAX_STORIES_PER_DAY:-$DEFAULT_MAX}" \
-    codex exec --sandbox danger-full-access --ask-for-approval never "$(autonomous_prompt)"
+    "$CODEX_BIN" exec -C "$ROOT" --sandbox "$CODEX_SANDBOX_MODE" "$@" "$(autonomous_prompt)"
 }
 
 usage() {
@@ -130,23 +245,36 @@ usage() {
 Usage:
   scripts/codex-auto.sh
   scripts/codex-auto.sh --check-budget
+  scripts/codex-auto.sh --check-pr-access
   scripts/codex-auto.sh --mark-started <STORY-ID>
   scripts/codex-auto.sh --record-completed <STORY-ID>
   scripts/codex-auto.sh --complete-after-success <STORY-ID> -- <commit-and-push-command>
 
 Environment:
+  CODEX_BIN               Override Codex executable. Default: codex.
+  CODEX_SANDBOX_MODE      Override Codex sandbox. Default: danger-full-access.
   MAX_STORIES_PER_DAY     Override the persisted daily max. Default: 10.
   PRAVARTAK_TODAY         Test hook for date reset behavior, YYYY-MM-DD.
   PRAVARTAK_DRY_RUN       Print the Codex prompt instead of launching Codex.
+  PRAVARTAK_REVIEW_BEFORE_COMPLETION
+                          1/required to force review guard, 0/off to disable it.
+  PRAVARTAK_REVIEW_DIR    Override review records dir. Default: .claude/reviews.
+  PRAVARTAK_GITHUB_REPO   Override inferred GitHub repo slug for PR access preflight.
+  PRAVARTAK_SKIP_PREFLIGHT
+                          1 to skip scripts/autonomous-preflight.sh before launch.
 EOF
 }
 
 case "${1:-}" in
   "")
-    launch_codex
+    shift || true
+    launch_codex "$@"
     ;;
   --check-budget)
     check_budget
+    ;;
+  --check-pr-access)
+    check_pr_access
     ;;
   --mark-started)
     [ -n "${2:-}" ] || { usage >&2; exit 64; }
@@ -166,7 +294,6 @@ case "${1:-}" in
     usage
     ;;
   *)
-    usage >&2
-    exit 64
+    launch_codex "$@"
     ;;
 esac

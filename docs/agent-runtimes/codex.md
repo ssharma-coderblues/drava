@@ -1,4 +1,4 @@
-<!-- pravartak: template=codex-runtime.md.template version=0.5.0 generated=2026-06-23T01:44:35Z -->
+<!-- pravartak: template=codex-runtime.md.template version=0.5.0 generated=2026-06-24T00:11:34Z -->
 # Codex Runtime Adapter
 
 This document is the Codex-specific operating surface for `drava`.
@@ -38,19 +38,32 @@ Read PRAVARTAK.md, this Codex adapter guide, and pravartak/skills/autonomous-loo
 Recommended launch command:
 
 ```bash
-MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 codex exec --sandbox danger-full-access --ask-for-approval never "<Pravartak autonomous prompt>"
+MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 \
+codex exec --dangerously-bypass-approvals-and-sandbox "<Pravartak autonomous prompt>"
 ```
 
-The generated helper wraps that command and adds the persisted daily budget preflight:
+The generated helper wraps that command, adds the persisted daily budget/preflight checks,
+and defaults to Codex's promptless unattended flag for this installed CLI:
 
 ```bash
 MAX_STORIES_PER_DAY=10 PRAVARTAK_NO_DELETES=1 scripts/codex-auto.sh
 ```
 
+Set `CODEX_UNATTENDED_FLAGS=` only when intentionally running an attended/sandboxed session;
+the default is chosen so autonomous runs do not pause for human approval prompts.
+
 Codex must run `scripts/codex-auto.sh --check-budget` before selecting each story and must
 run `scripts/no-delete-guard.sh --check-diff` before commits and after integration. If the
 budget is exhausted, exit cleanly with `BUDGET_EXHAUSTED`. If any delete or rename is
 required, stop with `BLOCKED_DELETION_REQUIRED`.
+
+Before starting an unattended batch, Codex must run `scripts/autonomous-preflight.sh`. If it
+reports `PREFLIGHT_BLOCKED`, stop and use `.pravartak/preflight-report.md` as the consolidated
+blocker report instead of discovering blockers one story at a time.
+
+If `git_workflow: pr-based`, Codex must run `scripts/codex-auto.sh --check-pr-access` before
+selecting work. If it reports `GH_PR_ACCESS_REQUIRED`, stop before implementation and fix
+GitHub CLI auth or switch unattended runs to `git_workflow: auto-merge`.
 
 ## Codex implement + Claude review
 
@@ -59,9 +72,24 @@ review:
 
 1. Set `implementation_runtime: codex` in `PRAVARTAK.md`.
 2. Set `review_runtime: claude` in `PRAVARTAK.md`.
-3. Run architect review with Claude using `docs/agent-runtimes/claude.md`.
-4. Run implementation with the Codex autonomous or implementation prompt above.
-5. Keep review, promotion, and any Claude slash-command work on the Claude adapter surface.
+3. Set or keep `review_before_completion: required`.
+4. Run architect review with Claude using `docs/agent-runtimes/claude.md`.
+5. Run implementation with the Codex autonomous or implementation prompt above.
+6. Capture Claude's story review in `.claude/reviews/<STORY-ID>.md` after the implementation
+   commit and before merging to the integration branch. If `scripts/claude-review.sh` exists,
+   run `scripts/claude-review.sh <STORY-ID> integration` for this handoff instead of invoking
+   Claude directly.
+7. If Claude returns findings, fix them on the feature branch, rerun the gate, recommit, and
+   rerun Claude review until the durable review file contains `Verdict: APPROVED` or
+   `Recommendation: APPROVED/PASS`.
+8. For unattended batches, prefer `git_workflow: auto-merge`: merge the approved feature
+   branch into the integration branch, rerun the no-delete guard and full gate, then push the
+   integration branch.
+9. Do not run `scripts/codex-auto.sh --record-completed <STORY-ID>` until the durable review
+   file is approved and the configured integration/push step has succeeded.
+10. If the wrapper writes `Verdict: REVIEW_UNAVAILABLE`, halt with the durable review file and
+   escalation context; do not retry indefinitely inside the autonomous session.
+11. Keep promotion and any Claude slash-command work on the Claude adapter surface.
 
 ## Status and other non-command tasks
 

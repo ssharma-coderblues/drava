@@ -89,7 +89,7 @@ Always scope to the given **team key** as well, and paginate fully.
 ## Write-back (opt-in status sync, 0.3.0)
 
 Enabled only when `tracker_sync: on` (see INGESTION.md §6 and PRAVARTAK.md). On completing a
-story, the autonomous loop (SKILL.md §6.6) updates the corresponding Linear issue to the done
+story, the autonomous loop (SKILL.md §6.8) updates the corresponding Linear issue to the done
 state:
 
 1. Resolve the issue id from the story's `[ENG-xxx]` identifier via the correlation table in

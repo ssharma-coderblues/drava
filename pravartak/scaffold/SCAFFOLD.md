@@ -115,7 +115,9 @@ Render at least these (target ← template):
 - `docs/agent-runtimes/claude.md` ← `claude-runtime.md.template`
 - `docs/agent-runtimes/codex.md` ← `codex-runtime.md.template`
 - `scripts/no-delete-guard.sh` ← `no-delete-guard.sh.template`
+- `scripts/autonomous-preflight.sh` ← `autonomous-preflight.sh.template`
 - `scripts/codex-auto.sh` ← `codex-auto.sh.template`
+- `scripts/claude-review.sh` ← `claude-review.sh.template`
 - `.pravartak/session-state.json` ← `session-state.json.template`
 - `.claude/backlog.md` ← `backlog.md.template` (then populated by ingestion, Phase 6)
 - `.claude/architect_review/progress.md` ← `progress.md.template`
@@ -266,7 +268,7 @@ Assign ownership and strategy as follows:
 | File class | ownership | upgrade_strategy |
 | --- | --- | --- |
 | Command pointers (`.claude/commands/*.md`) | `library` | `always-replace` |
-| `PRAVARTAK.md`, `CLAUDE.md`, runtime adapter docs, `.claude/settings.json`, `.claude/scripts/gate.sh`, `scripts/no-delete-guard.sh`, `scripts/codex-auto.sh`, language config (`pyproject.toml`, `ruff.toml`, …) | `project` | `diff-and-prompt` |
+| `PRAVARTAK.md`, `CLAUDE.md`, runtime adapter docs, `.claude/settings.json`, `.claude/scripts/gate.sh`, `scripts/no-delete-guard.sh`, `scripts/autonomous-preflight.sh`, `scripts/codex-auto.sh`, `scripts/claude-review.sh`, language config (`pyproject.toml`, `ruff.toml`, …) | `project` | `diff-and-prompt` |
 | Accumulating state files (`backlog.md`, `completed.md`, `blocked.md`, `escalations.md`, `current_story.md`, `progress.md`, `session.md`, `commit_log.txt`, `.pravartak/session-state.json`) | `project` | `preserve-on-conflict` |
 | READMEs and other rendered docs | `project` | `diff-and-prompt` |
 

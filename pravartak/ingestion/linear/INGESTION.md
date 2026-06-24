@@ -136,7 +136,7 @@ connector's `issueUpdate` mutation (`connector.md` §write-back). The loop resol
 from the story's `[ENG-xxx]` identifier and the correlation table (§3).
 
 Write-back is an **outward action on the project's own Linear workspace**; the `tracker_sync`
-opt-in is its explicit authorization (see autonomous-loop SKILL.md §6.6 and the
+opt-in is its explicit authorization (see autonomous-loop SKILL.md §6.8 and the
 irreversible/outward-action stop condition §11.4). It is never enabled implicitly, and it
 never touches another team's workspace.
 

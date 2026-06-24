@@ -16,6 +16,8 @@
       "Bash(.claude/scripts/gate.sh:*)",
       "Bash(scripts/no-delete-guard.sh:*)",
       "Bash(scripts/codex-auto.sh:*)",
+      "Bash(scripts/autonomous-preflight.sh:*)",
+      "Bash(scripts/claude-review.sh:*)",
       "Read",
       "Edit",
       "Write"

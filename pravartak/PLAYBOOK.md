@@ -487,7 +487,8 @@ instructions. No YAML, no schema. Common knobs:
 | `autonomous_runtime: claude` | `claude` | Runtime used for Phase 4 execution. |
 | `implementation_runtime: claude` | `claude` | Runtime expected to implement reviewed backlog stories. |
 | `review_runtime: claude` | `claude` | Runtime expected to lead architect review and promotion. |
-| `git_workflow: pr-based` | merge to integration branch | Open a PR via `gh pr create` targeting the **integration branch** instead of merging directly. In neither mode does the loop target `main`. |
+| `git_workflow: pr-based` | merge to integration branch | Open a PR via `gh pr create` targeting the **integration branch** instead of merging directly. Preflight `gh` access before implementation. In neither mode does the loop target `main`. |
+| `review_before_completion: required` | required when runtimes differ | Require an approved durable review in `.claude/reviews/<STORY-ID>.md` before integration/completion. |
 | `coverage_threshold: 90` | 95 | Lower the coverage gate. |
 | `gate_strictness: lenient` | strict | Allow warnings; still block on errors. |
 | `sprint_cadence: weekly` | by story batch | Weekly sprint tags regardless of story count. |
@@ -539,8 +540,9 @@ When something breaks, check here first.
 ## 16. Scope — what Pravartak does not solve
 
 Not project management (it ingests from Jira/Linear/Notion, doesn't replace them). Not
-CI/CD (local gates only; cloud CI is downstream). Not code review (auto-mode merges; human
-review is separate, or set `git_workflow: pr-based`). Not deployment. Not multi-team /
+CI/CD (local gates only; cloud CI is downstream). Not code review (auto-mode enforces the
+configured review gate, but reviewer judgment is still external; set
+`review_before_completion: required` or `git_workflow: pr-based`). Not deployment. Not multi-team /
 multi-repo coordination (one repo, one Pravartak instance in v0.1).
 
 ---

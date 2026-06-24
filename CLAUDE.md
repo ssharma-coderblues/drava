@@ -17,8 +17,10 @@ For every Claude session:
 
 - The project is scaffolded with `interactive_runtime: codex`,
   `autonomous_runtime: codex`, `implementation_runtime:
-  codex`, and `review_runtime: codex` unless
-  `PRAVARTAK.md` is later edited.
+  codex`, and `review_runtime: claude`.
+- Claude owns story review and promotion review. For unattended Codex handoffs, review files
+  are written through `scripts/claude-review.sh <STORY-ID> integration` to
+  `.claude/reviews/<STORY-ID>.md`; Codex may only record completion after an approved verdict.
 - Claude-specific permissions and the commit-time gate hook live in `.claude/settings.json`.
 - `.claude/commands/` is the Claude adapter command surface. Other runtimes invoke the same
   skills directly rather than through slash commands.
@@ -35,7 +37,8 @@ claude --permission-mode auto --effort xhigh --max-budget-usd <N> \
 
 ## Architect overrides
 
-- Codex is the primary runtime for scaffold, review, implementation, and autonomous execution.
+- Codex is the primary runtime for scaffold, implementation, and autonomous execution.
+- Claude is the required review runtime for story review and promotion review.
 - Wave-Planner PoC (`poc-wave-planner/`) is reference material only (decided 2026-06-22). Excluded from production build targets. No engineering time allocated to productionizing it.
 - Treat `docs/Drava_Project_Specification.docx` and `docs/Drava_Executive_Summary.docx` as authoritative source material snapshots.
 - `promotion: external` until CI and branch-protection policy are explicitly configured.

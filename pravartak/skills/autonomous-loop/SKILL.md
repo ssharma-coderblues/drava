@@ -28,9 +28,13 @@ explicitly-gated **promotion phase** (spec §11.6, skill `promotion` / `/promote
 loop's scope. That phase has two modes: `external` (a downstream actor/DevOps merges, typically
 after a production deploy) and `pravartak-gated` (Pravartak runs a human- and CI-gated
 promotion). **In neither mode does the unattended per-story loop merge to `main`.** The
-per-story merge into the integration branch on a passing gate **is** the autonomous
-approval: gate-pass = approval. The loop does not ask a human per merge (that would defeat
-autonomous execution) and does not open a PR to `main`.
+per-story merge into the integration branch on a passing gate **is** the autonomous merge
+approval only when no separate story-review gate is configured. In mixed-runtime mode
+(`implementation_runtime` differs from `review_runtime`) or when
+`review_before_completion: required`, the story is not eligible to merge into `integration`
+until the configured review runtime has approved the implementation and that review is
+captured durably. The loop does not ask a human per merge unless the project selects
+`pr-based`; it never opens a PR to `main`.
 
 **Honest halt over forced completion (spec §14.10).** A real backlog to a 95%-coverage /
 integration-test bar is multi-session work; one run will not honestly finish a large backlog.
@@ -62,7 +66,8 @@ On launch:
 3. Read this file (`pravartak/skills/autonomous-loop/SKILL.md`) for the execution procedure.
 4. Read the standards under `pravartak/standards/` that the project's stories touch.
 5. Run the repo-ownership pre-check (§6.0) and the resume check (§5.2).
-6. Run the no-delete guard and daily budget preflight (§5.1), then start at the first
+6. Run the consolidated autonomous preflight, then the no-delete guard and daily budget
+   preflight (§5.1), then start at the first
    unchecked story in `.claude/backlog.md` whose dependencies are complete.
 7. Continue until the backlog is empty or a stop condition fires (§7).
 
@@ -79,20 +84,26 @@ still runs, but the result may not match architect intent (spec §14.8).
 | --- | --- | --- |
 | `autonomous_runtime` | `claude` | Runtime assigned to run this loop. |
 | `implementation_runtime` | `claude` | Runtime expected to implement stories during this phase. |
+| `review_runtime` | `claude` | Runtime expected to perform story review and promotion gates. |
 | `integration_branch` | `integration` | The repo's integration branch. The loop cuts feature branches from it and merges back into it. Created off the default branch on first touch. |
 | `git_workflow` | `auto-merge` | `auto-merge`: on a clean gate pass, merge feature → integration branch directly (gate-pass IS the approval). `pr-based`: open a PR via `gh pr create` targeting the **integration branch** (human reviews the merge). `local-only`: no remote operations. **No mode ever targets `main`.** |
 | `coverage_threshold` | `95` | Coverage percentage the gate enforces. |
 | `gate_strictness` | `strict` | `strict`: block on any warning. `lenient`: allow warnings, block on errors. |
+| `review_before_completion` | `required when implementation_runtime != review_runtime` | Require a durable story review before `.claude/backlog.md`, `.claude/completed.md`, or `.pravartak/session-state.json` mark the story complete. Set `off` only for same-runtime projects that intentionally treat gate-pass as the only review. |
 | `sprint_cadence` | by story batch | `weekly` (or other): produce sprint tags on that cadence regardless of story count. |
 | `branch_pattern` | `feature/<project>-<story-id>-<slug>` | Feature-branch naming. |
 | `max_stories_per_day` | `10` | Maximum completed stories per UTC day. The persisted `.pravartak/session-state.json` value is authoritative for the current day, and `MAX_STORIES_PER_DAY` overrides it for one launch. |
-| `tracker_sync` | `off` | `on`: for issue-tracker archetypes (`jira`/`linear`), update the corresponding tracker issue to its done state when a story completes (§6.6), via the archetype's `connector.md`. Opt-in; the project's own tracker only. |
+| `tracker_sync` | `off` | `on`: for issue-tracker archetypes (`jira`/`linear`), update the corresponding tracker issue to its done state when a story completes (§6.8), via the archetype's `connector.md`. Opt-in; the project's own tracker only. |
 | `tracker_done_state` | archetype default | The target tracker status/state for write-back (e.g. `Done`) when not the tracker's default completed state. |
 
 Determine the default branch once at startup (the branch the integration branch is cut from,
 e.g. `main`). Determine remote mode once: if `git_workflow: local-only` is set, or the repo
 has no `origin` remote (`git remote get-url origin` fails), operate in **local-only mode**
 (§6.5) — never attempt a push or any remote operation.
+
+If `git_workflow: pr-based` is selected, preflight the GitHub CLI repo access before selecting
+work. The Codex helper exposes `scripts/codex-auto.sh --check-pr-access`; a failure is
+`GH_PR_ACCESS_REQUIRED` and must halt before implementation, not after a story is built.
 
 ## 4. State files
 
@@ -113,18 +124,21 @@ has no `origin` remote (`git remote get-url origin` fails), operate in **local-o
 
 Before picking any next story, run the executable guards generated into the project:
 
-1. Run `scripts/no-delete-guard.sh --check-diff`. If it reports a delete or rename status,
+1. Run `scripts/autonomous-preflight.sh` before starting an unattended batch. If it reports
+   `PREFLIGHT_BLOCKED`, use `.pravartak/preflight-report.md` as the consolidated blocker
+   report and halt before implementation.
+2. Run `scripts/no-delete-guard.sh --check-diff`. If it reports a delete or rename status,
    halt with `BLOCKED_DELETION_REQUIRED` and write the diff status to
    `.claude/escalations.md`. Do not continue by deleting, renaming, or cleaning up files.
-2. Read `.pravartak/session-state.json`. If `MAX_STORIES_PER_DAY` is set, update
+3. Read `.pravartak/session-state.json`. If `MAX_STORIES_PER_DAY` is set, update
    `maxStoriesPerDay` for this run. Otherwise use the persisted `maxStoriesPerDay`, default
    `10` if absent.
-3. Compare `date` to today's UTC date (`YYYY-MM-DD`). If the date changed, set `date` to
+4. Compare `date` to today's UTC date (`YYYY-MM-DD`). If the date changed, set `date` to
    today and reset `completedToday` to `0`; preserve `maxStoriesPerDay` and the story
    pointers.
-4. If `completedToday >= maxStoriesPerDay`, exit cleanly with `BUDGET_EXHAUSTED`. This is a
+5. If `completedToday >= maxStoriesPerDay`, exit cleanly with `BUDGET_EXHAUSTED`. This is a
    successful bounded-session stop, not an error.
-5. After selecting a story, record it as `lastStartedStory` before implementation begins.
+6. After selecting a story, record it as `lastStartedStory` before implementation begins.
 
 The generated `scripts/codex-auto.sh --check-budget` and `--mark-started <STORY-ID>` commands
 implement this state transition for Codex launches. Other runtimes must perform the same
@@ -227,31 +241,80 @@ Before committing, run `scripts/no-delete-guard.sh --check-diff`. The commit is 
 `git diff` contains `D` or `R` status entries. Renames are unsupported in autonomous mode
 because they are delete/add operations from the safety model's perspective.
 
-### 6.5 Integrate — merge into the integration branch (never `main`)
+### 6.5 Push and review the feature branch
 
-Integration happens only on a **clean gate pass**. Behavior depends on `git_workflow` (§3):
+After a clean local gate, push the feature branch in remote modes:
+
+1. Push the feature branch: `git push -u origin <feature-branch>` (preserves history). Skip
+   this in local-only mode.
+2. Run the required review gate (§6.6) before any auto-merge into `integration`. If review is
+   unavailable, unapproved, or returns findings, halt or fix on the feature branch. Do not merge
+   unreviewed mixed-runtime work to `integration`.
+
+For `pr-based`, the PR can be opened before or after review depending on project preference,
+but `gh` access must have been preflighted before implementation. If PR creation still fails
+after preflight, halt honestly; do not mark complete or advance the daily counter.
+
+### 6.6 Review gate
+
+Run this section after the implementation commit and feature-branch push, but before
+auto-merging to `integration` or marking the story complete.
+
+Review is required when `review_before_completion: required`, or when
+`implementation_runtime` and `review_runtime` differ. When review is required:
+
+1. Ask the configured `review_runtime` to review the story diff or PR. The review must focus
+   on correctness, acceptance criteria, missing tests, regression risk, security risk, and
+   whether the story is safe to mark complete.
+   If `review_runtime` is Claude and `scripts/claude-review.sh` exists, use
+   `scripts/claude-review.sh <STORY-ID> <integration_branch>` rather than invoking Claude
+   directly. The wrapper gives Claude a diff-only prompt, disables tools, and enforces a
+   timeout so reviewer unavailability becomes a durable halt instead of an unbounded wait.
+2. Capture the full review in `.claude/reviews/<STORY-ID>.md` with findings first and a
+   clear final line: `Verdict: APPROVED`, `Verdict: NEEDS_CHANGES`, or `Verdict: REJECTED`.
+   `Recommendation: APPROVED/PASS` is accepted for compatibility with existing reviewer
+   agents.
+   `Verdict: REVIEW_UNAVAILABLE` means the review runtime did not return a usable result; halt
+   with that durable file and do not merge or advance the daily counter.
+3. If the review verdict is `NEEDS_CHANGES` or `REJECTED`, fix the findings on the feature
+   branch, rerun the local gate, recommit, push/update the PR, and rerun review. Do not
+   integrate or mark the story complete while an unapproved review record is the latest durable
+   review.
+4. Only an approved durable review satisfies this gate. A transient terminal response that is
+   not written to `.claude/reviews/<STORY-ID>.md` is not enough.
+5. For Codex launches, `scripts/codex-auto.sh --record-completed <STORY-ID>` enforces this
+   guard when the project configuration requires review. If it reports `REVIEW_REQUIRED` or
+   `REVIEW_NOT_APPROVED`, halt honestly and fix/review rather than bypassing the guard.
+
+When review is not required, the clean gate is enough to proceed to integration.
+
+### 6.7 Integrate — merge into the integration branch (never `main`)
+
+Integration happens only on a **clean gate pass** and any required approved review. Behavior
+depends on `git_workflow` (§3):
 
 **auto-merge (default, remote present):**
 
-1. Push the feature branch: `git push -u origin <feature-branch>` (preserves history).
-2. Check out the integration branch and merge the feature branch into it with no fast-forward:
+1. Check out the integration branch and merge the reviewed feature branch into it with no
+   fast-forward:
    `git checkout <integration_branch> && git merge --no-ff <feature-branch>` with a merge-commit
-   message referencing the story id. **Gate-pass is the approval — do not ask a human per merge.**
-3. **Re-run the no-delete guard and the gate against the integration branch post-merge.** If
+   message referencing the story id. **Gate-pass plus required review is the approval — do not
+   ask a human per merge.**
+2. **Re-run the no-delete guard and the gate against the integration branch post-merge.** If
    either fails, do not push the integration branch. Halt and escalate with the pre-merge
    commit, merge commit, guard/gate output, and repair instructions for a human. Do not use
    `git reset --hard`, `git checkout --`, `git restore`, or any deletion-based cleanup.
-4. Push the integration branch: `git push origin <integration_branch>`.
-5. **Do not delete the feature branch** and **do not touch `main`** (spec §14.7, §14.9).
+3. Push the integration branch: `git push origin <integration_branch>`.
+4. **Do not delete the feature branch** and **do not touch `main`** (spec §14.7, §14.9).
    Feature branches are kept until their work reaches `main` via the downstream
    integration→`main` merge; pruning is a periodic hygiene step outside this loop.
 
 **pr-based (`git_workflow: pr-based`):**
 
-1. Push the feature branch.
-2. Open a PR **targeting the integration branch** (`gh pr create --base <integration_branch>`)
+1. Open a PR **targeting the integration branch** (`gh pr create --base <integration_branch>`)
    with a title/body summarizing the story. Do **not** merge — human review owns the merge.
-   Record the PR URL in `completed.md`'s entry and move on. (Never target `main`.)
+   If PR creation fails, halt and escalate; do not mark the story complete and do not advance
+   the daily story counter. (Never target `main`.)
 
 **local-only (`git_workflow: local-only` or no origin):**
 
@@ -261,18 +324,19 @@ Integration happens only on a **clean gate pass**. Behavior depends on `git_work
    and escalate with the true local state. Do not undo with destructive commands.
 4. Do not delete the feature branch; no remote operations.
 
-### 6.6 Finish the story
+### 6.8 Finish the story
 
-A story is finished **only if it genuinely passed the full gate and integrated cleanly** (§1,
-honest completion). Then:
+A story is finished **only if it genuinely passed the full gate, completed the configured
+integration/PR step, and passed any required review gate** (§1, honest completion). Then:
 
 1. Mark the story `[x]` in `.claude/backlog.md`.
 2. Append the story to `.claude/completed.md` (id, title, feature branch, merge-commit/PR
    reference, timestamp).
-3. Update `.pravartak/session-state.json` only after the story commit and configured
-   integration step have succeeded. Increment `completedToday` by one and set
-   `lastCompletedStory` to the story id. Never increment after a failed commit, failed push,
-   failed PR creation, failed local integration, blocked story, or partial implementation.
+3. Update `.pravartak/session-state.json` only after the story commit, required review gate,
+   configured integration step, and post-integration gate have succeeded. Increment
+   `completedToday` by one and set `lastCompletedStory` to the story id. Never increment after
+   a failed commit, failed push, failed PR creation, failed local integration,
+   missing/unapproved review, blocked story, or partial implementation.
 4. **Tracker write-back (opt-in).** If `tracker_sync: on` and the project uses an issue-tracker
    archetype (`jira`/`linear`), update the corresponding tracker issue to its done state via
    the archetype's `connector.md` write-back (resolve the issue from the story's `[KEY]`
@@ -361,6 +425,10 @@ present in `completed.md`.
 - **Never push a broken integration branch.** Always re-run the no-delete guard and gate
   post-merge. If either fails, halt before push and report the exact state for attended
   repair.
+- **Never count an unreviewed mixed-runtime story as complete.** When
+  `implementation_runtime` and `review_runtime` differ, or `review_before_completion` is
+  required, `.claude/reviews/<STORY-ID>.md` must contain an approved review before backlog,
+  completed-log, or daily-budget state advances.
 - **Never edit specs or `discovery/`.** Spec changes are architect-review's job; halt and
   escalate if one is needed.
 - **Do not delete feature branches.** Cleanup is a downstream hygiene step after integration→

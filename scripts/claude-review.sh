@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+# pravartak: template=claude-review.sh.template version=0.5.0 generated=2026-06-24T00:11:34Z
+#
+# Bounded Claude review helper for mixed-runtime Pravartak stories.
+
+set -euo pipefail
+
+ROOT="${PRAVARTAK_PROJECT_ROOT:-}"
+if [ -z "$ROOT" ]; then
+  ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+
+STORY_ID="${1:-}"
+BASE_REF="${2:-integration}"
+CLAUDE_BIN="${CLAUDE_BIN:-claude}"
+REVIEW_DIR="${PRAVARTAK_REVIEW_DIR:-$ROOT/.claude/reviews}"
+TIMEOUT_SECONDS="${PRAVARTAK_REVIEW_TIMEOUT_SECONDS:-180}"
+HEALTH_TIMEOUT_SECONDS="${PRAVARTAK_REVIEW_HEALTH_TIMEOUT_SECONDS:-15}"
+BUDGET_USD="${PRAVARTAK_REVIEW_BUDGET_USD:-3}"
+MAX_DIFF_CHARS="${PRAVARTAK_REVIEW_MAX_DIFF_CHARS:-160000}"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/claude-review.sh <STORY-ID> [BASE-REF]
+  scripts/claude-review.sh --health-check
+
+Environment:
+  CLAUDE_BIN                         Override Claude executable. Default: claude.
+  PRAVARTAK_REVIEW_TIMEOUT_SECONDS   Timeout for reviewer output. Default: 180.
+  PRAVARTAK_REVIEW_HEALTH_TIMEOUT_SECONDS
+                                      Timeout for health check. Default: 15.
+  PRAVARTAK_REVIEW_BUDGET_USD        Claude max budget. Default: 3.
+  PRAVARTAK_REVIEW_MAX_DIFF_CHARS    Max diff chars sent to Claude. Default: 160000.
+  PRAVARTAK_REVIEW_DIR               Review output dir. Default: .claude/reviews.
+EOF
+}
+
+command -v "$CLAUDE_BIN" >/dev/null 2>&1 || {
+  printf 'REVIEW_UNAVAILABLE: Claude CLI not found. Set CLAUDE_BIN=/path/to/claude.\n' >&2
+  exit 67
+}
+
+run_claude_with_timeout() {
+  local timeout_seconds="$1"
+  local stdout_file="$2"
+  local stderr_file="$3"
+  shift 3
+  local pid elapsed timed_out rc
+  set +e
+  "$@" > "$stdout_file" 2> "$stderr_file" &
+  pid=$!
+  elapsed=0
+  timed_out=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$elapsed" -ge "$timeout_seconds" ]; then
+      timed_out=1
+      kill "$pid" 2>/dev/null
+      sleep 1
+      kill -9 "$pid" 2>/dev/null
+      break
+    fi
+    sleep 1
+    elapsed=$((elapsed + 1))
+  done
+  wait "$pid" >/dev/null 2>&1
+  rc=$?
+  if [ "$timed_out" -eq 1 ]; then
+    return 124
+  fi
+  return "$rc"
+}
+
+health_check() {
+  local tmpdir stdout_file stderr_file rc
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/pravartak-claude-health.XXXXXX")"
+  stdout_file="$tmpdir/stdout.txt"
+  stderr_file="$tmpdir/stderr.txt"
+  set +e
+  run_claude_with_timeout "$HEALTH_TIMEOUT_SECONDS" "$stdout_file" "$stderr_file" \
+    "$CLAUDE_BIN" --permission-mode dontAsk --tools "" --no-session-persistence \
+    --max-budget-usd 0.25 -p 'Reply exactly: REVIEW_AVAILABLE'
+  rc=$?
+  set -e
+  if [ "$rc" -eq 0 ] && grep -Fq 'REVIEW_AVAILABLE' "$stdout_file"; then
+    rm -rf "$tmpdir"
+    printf 'REVIEW_AVAILABLE: Claude review health check passed.\n'
+    return 0
+  fi
+  printf 'REVIEW_UNAVAILABLE: Claude review health check failed' >&2
+  if [ "$rc" -eq 124 ]; then
+    printf ' after %s seconds' "$HEALTH_TIMEOUT_SECONDS" >&2
+  else
+    printf ' with exit code %s' "$rc" >&2
+  fi
+  printf '.\n' >&2
+  sed -n '1,80p' "$stderr_file" >&2
+  rm -rf "$tmpdir"
+  return 67
+}
+
+case "$STORY_ID" in
+  --health-check|--check)
+    health_check
+    exit $?
+    ;;
+esac
+
+[ -n "$STORY_ID" ] || { usage >&2; exit 64; }
+
+mkdir -p "$REVIEW_DIR"
+review_file="$REVIEW_DIR/$STORY_ID.md"
+tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/pravartak-claude-review.XXXXXX")"
+diff_file="$tmpdir/diff.patch"
+prompt_file="$tmpdir/prompt.txt"
+stdout_file="$tmpdir/stdout.txt"
+stderr_file="$tmpdir/stderr.txt"
+
+cleanup() {
+  rm -rf "$tmpdir"
+}
+trap cleanup EXIT
+
+git -C "$ROOT" diff --no-ext-diff --unified=80 "$BASE_REF...HEAD" > "$diff_file"
+diff_chars="$(wc -c < "$diff_file" | tr -d ' ')"
+if [ "$diff_chars" -gt "$MAX_DIFF_CHARS" ]; then
+  dd if="$diff_file" of="$diff_file.truncated" bs="$MAX_DIFF_CHARS" count=1 2>/dev/null
+  {
+    cat "$diff_file.truncated"
+    printf '\n\n[Diff truncated from %s to %s characters for bounded review]\n' "$diff_chars" "$MAX_DIFF_CHARS"
+  } > "$diff_file"
+fi
+
+{
+  printf 'Review %s against %s using only the diff below.\n' "$STORY_ID" "$BASE_REF"
+  printf 'Do not use tools. Focus on correctness, acceptance criteria, auth scoping, API/client boundaries, tests, and regressions.\n'
+  printf 'Return concise findings with file/line references, then a final line exactly "Verdict: APPROVED" if there are no blocking findings, or "Verdict: NEEDS_CHANGES" if fixes are required.\n\n'
+  cat "$diff_file"
+} > "$prompt_file"
+
+set +e
+run_claude_with_timeout "$TIMEOUT_SECONDS" "$stdout_file" "$stderr_file" \
+  "$CLAUDE_BIN" --permission-mode dontAsk --tools "" --no-session-persistence \
+  --max-budget-usd "$BUDGET_USD" -p "$(cat "$prompt_file")"
+rc=$?
+set -e
+
+if [ "$rc" -eq 124 ]; then
+  {
+    printf '# %s Review\n\n' "$STORY_ID"
+    printf '%s\n' '- Reviewer: Claude CLI'
+    printf '%s\n' '- Status: REVIEW_UNAVAILABLE'
+    printf '%s\n\n' "- Reason: timed out after $TIMEOUT_SECONDS seconds with no completed review."
+    printf '## stdout\n\n'
+    sed -n '1,220p' "$stdout_file"
+    printf '\n## stderr\n\n'
+    sed -n '1,220p' "$stderr_file"
+    printf '\nVerdict: REVIEW_UNAVAILABLE\n'
+  } > "$review_file"
+  printf 'REVIEW_UNAVAILABLE: Claude review timed out after %s seconds; wrote %s\n' "$TIMEOUT_SECONDS" "$review_file" >&2
+  exit 67
+fi
+
+if [ "$rc" -ne 0 ] || [ ! -s "$stdout_file" ]; then
+  {
+    printf '# %s Review\n\n' "$STORY_ID"
+    printf '%s\n' '- Reviewer: Claude CLI'
+    printf '%s\n' '- Status: REVIEW_UNAVAILABLE'
+    printf '%s\n\n' "- Exit code: $rc"
+    printf '## stdout\n\n'
+    sed -n '1,220p' "$stdout_file"
+    printf '\n## stderr\n\n'
+    sed -n '1,220p' "$stderr_file"
+    printf '\nVerdict: REVIEW_UNAVAILABLE\n'
+  } > "$review_file"
+  printf 'REVIEW_UNAVAILABLE: Claude review failed or produced no output; wrote %s\n' "$review_file" >&2
+  exit 67
+fi
+
+cp "$stdout_file" "$review_file"
+
+if grep -Eiq '^[[:space:]>#*-]*Verdict[[:space:]]*:[[:space:]]*APPROVED\b' "$review_file" ||
+  grep -Eiq '^[[:space:]>#*-]*Recommendation[[:space:]]*:[[:space:]]*(APPROVED|PASS)\b' "$review_file"; then
+  printf 'Claude review approved: %s\n' "$review_file"
+  exit 0
+fi
+
+if grep -Eiq '^[[:space:]>#*-]*Verdict[[:space:]]*:[[:space:]]*(NEEDS_CHANGES|REJECTED)\b' "$review_file"; then
+  printf 'Claude review requires follow-up: %s\n' "$review_file" >&2
+  exit 65
+fi
+
+{
+  printf '\n\n---\n'
+  printf 'Pravartak wrapper note: Claude output did not contain an accepted final verdict line.\n'
+  printf 'Verdict: REVIEW_UNAVAILABLE\n'
+} >> "$review_file"
+printf 'REVIEW_UNAVAILABLE: Claude output lacked an accepted verdict; wrote %s\n' "$review_file" >&2
+exit 67
